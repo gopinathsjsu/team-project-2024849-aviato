@@ -21,4 +21,10 @@ public class UserController {
     public List<User> getAllUsers() {
         return userRepo.findAll();
     }
+
+//    @GetMapping("/api/admin/dashboard")
+//    @PreAuthorize("hasAuthority('ADMIN')")
+//    public String adminView() {
+//        return "Admin only data";
+//    }
 }

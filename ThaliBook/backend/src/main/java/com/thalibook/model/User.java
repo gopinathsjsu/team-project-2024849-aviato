@@ -4,8 +4,14 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id
@@ -27,12 +33,4 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    // 👇 Add public getters manually
-    public Long getUserId() { return userId; }
-    public String getEmail() { return email; }
-    public String getPasswordHash() { return passwordHash; }
-    public String getRole() { return role; }
-    public String getPhone() { return phone; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 }
