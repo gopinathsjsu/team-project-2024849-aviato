@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.security.Key;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -46,14 +47,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .getBody();
 
         String email = claims.getSubject();
+        Long userId = claims.get("userId", Integer.class).longValue();
         String role = claims.get("role", String.class);
-
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
-
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    email,
+                    null,
+                    List.of(new SimpleGrantedAuthority(role))
+            );
+            auth.setDetails(Map.of("userId", userId, "role", role));
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 

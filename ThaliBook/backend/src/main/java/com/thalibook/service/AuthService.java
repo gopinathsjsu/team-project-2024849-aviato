@@ -42,7 +42,7 @@ public class AuthService {
         }
 
         // You can encode more info here, like role:userId
-        return JwtUtil.generateToken(user.getEmail(), user.getRole());
+        return JwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRole());
 
     }
 
