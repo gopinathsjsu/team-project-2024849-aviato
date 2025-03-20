@@ -5,6 +5,7 @@ import com.thalibook.model.Restaurant;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.service.RestaurantService;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -86,5 +88,21 @@ public class RestaurantController {
         }
 
         return ResponseEntity.ok(availableRestaurants);
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<Restaurant> getRestaurantDetails(
+          @RequestParam Long RestaurantId
+    )
+    {
+      Optional<Restaurant> targetRestaurant =  restaurantRepository.findById( RestaurantId );
+      if( targetRestaurant.isPresent())
+      {
+        return  ResponseEntity.ok(targetRestaurant.get());
+      }
+      else{
+          return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                  .body(null);
+      }
     }
 }
