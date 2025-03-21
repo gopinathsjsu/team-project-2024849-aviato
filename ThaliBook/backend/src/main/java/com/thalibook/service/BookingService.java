@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class BookingService {
@@ -70,6 +71,27 @@ public class BookingService {
 
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
+    }
+
+
+    public void cancelBooking(Long bookingId, Long userId, String role) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NoSuchElementException("Booking not found"));
+
+        if (role.equals("CUSTOMER") && !booking.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("You can only cancel your own bookings.");
+        }
+
+        if (role.equals("RESTAURANT_MANAGER")) {
+            throw new IllegalArgumentException("Managers are not allowed to cancel bookings.");
+        }
+
+        if ("CANCELLED".equalsIgnoreCase(booking.getStatus())) {
+            throw new IllegalArgumentException("Booking is already cancelled.");
+        }
+
+        booking.setStatus("CANCELLED");
+        bookingRepository.save(booking);
     }
 
 }

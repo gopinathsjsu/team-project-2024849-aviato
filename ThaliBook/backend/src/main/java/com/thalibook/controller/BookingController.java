@@ -4,6 +4,7 @@ import com.thalibook.dto.BookingRequest;
 import com.thalibook.model.Booking;
 import com.thalibook.service.BookingService;
 import com.thalibook.util.JwtUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -57,6 +59,23 @@ public class BookingController {
         }
 
         return ResponseEntity.ok(bookings);
+    }
+
+    @DeleteMapping("/{bookingId}")
+    public ResponseEntity<?> cancelBooking(@PathVariable Long bookingId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> details = (Map<String, Object>) auth.getDetails();
+        Long userId = (Long) details.get("userId");
+        String role = (String) details.get("role");
+
+        try {
+            bookingService.cancelBooking(bookingId, userId, role);
+            return ResponseEntity.ok(Map.of("message", "Booking cancelled successfully."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
     }
 
 
