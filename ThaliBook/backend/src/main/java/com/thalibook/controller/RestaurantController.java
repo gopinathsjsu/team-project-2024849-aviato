@@ -1,12 +1,16 @@
 package com.thalibook.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thalibook.dto.CreateRestaurantRequest;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.service.RestaurantService;
+import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -18,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -36,6 +41,22 @@ public class RestaurantController {
         this.tablesAvailabilityRepository = tablesAvailabilityRepository;
         this.objectMapper = objectMapper;
     }
+
+    @PostMapping
+    public ResponseEntity<?> addRestaurant(@Valid @RequestBody CreateRestaurantRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> details = (Map<String, Object>) auth.getDetails();
+        Long userId = (Long) details.get("userId");
+        String role = (String) details.get("role");
+
+        if (!"RESTAURANT_MANAGER".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Only managers can add restaurants"));
+        }
+
+        Restaurant saved = restaurantService.createRestaurant(request, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
 
     @GetMapping("/search")
     public ResponseEntity<List<Restaurant>> searchRestaurants(

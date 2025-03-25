@@ -1,10 +1,13 @@
 package com.thalibook.model;
 
+import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @Table(name = "restaurants")
@@ -47,8 +50,9 @@ public class Restaurant {
     @Column(name = "cost_rating", nullable = false, length = 3)
     private String costRating;
 
-    @Column(columnDefinition = "json", nullable = false)
-    private String hours;  // You can map this as a JSON string for now
+    @Type(JsonType.class)
+    @Column(name = "hours", columnDefinition = "json")
+    private Map<String, String> hours;
 
     @Column(name = "photo_url", length = 255)
     private String photoUrl;

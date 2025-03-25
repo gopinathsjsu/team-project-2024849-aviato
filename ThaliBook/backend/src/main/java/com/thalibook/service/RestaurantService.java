@@ -1,6 +1,8 @@
 package com.thalibook.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thalibook.dto.CreateRestaurantRequest;
 import com.thalibook.model.Booking;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.BookingRepository;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +28,36 @@ public class RestaurantService {
     public RestaurantService(RestaurantRepository restaurantRepository) {
         this.restaurantRepository = restaurantRepository;
     }
+
+    public Restaurant createRestaurant(CreateRestaurantRequest request, Long managerId) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String hoursJson;
+        try {
+            hoursJson = objectMapper.writeValueAsString(request.getHours());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Invalid hours format", e);
+        }
+
+        Restaurant restaurant = new Restaurant();
+        restaurant.setManagerId(managerId);
+        restaurant.setName(request.getName());
+        restaurant.setAddress(request.getAddress());
+        restaurant.setCity(request.getCity());
+        restaurant.setState(request.getState());
+        restaurant.setZipCode(request.getZipCode());
+        restaurant.setPhone(request.getPhone());
+        restaurant.setDescription(request.getDescription());
+        restaurant.setCuisine(request.getCuisine());
+        restaurant.setCostRating(request.getCostRating());
+        restaurant.setHours(request.getHours());
+        restaurant.setPhotoUrl(request.getPhotoUrl());
+        restaurant.setIsApproved(false);
+        restaurant.setCreatedAt(LocalDateTime.now());
+
+        return restaurantRepository.save(restaurant);
+    }
+
 
     public List<Restaurant> searchRestaurants(LocalDate date, LocalTime time, int partySize,
                                               String city, String state, String zip) {
