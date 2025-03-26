@@ -8,6 +8,8 @@ import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "restaurants")
@@ -56,6 +58,9 @@ public class Restaurant {
 
     @Column(name = "photo_url", length = 255)
     private String photoUrl;
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     @Column(name = "is_approved")
     private Boolean isApproved;
