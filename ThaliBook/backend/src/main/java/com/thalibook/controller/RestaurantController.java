@@ -2,6 +2,7 @@ package com.thalibook.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
+import com.thalibook.dto.RestaurantDetailsRequest;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.service.RestaurantService;
@@ -141,19 +142,14 @@ public class RestaurantController {
         return ResponseEntity.ok(availableRestaurants);
     }
 
-    @GetMapping("/details")
-    public ResponseEntity<Restaurant> getRestaurantDetails(
-          @RequestParam Long RestaurantId
+    @GetMapping("/details/{id}")
+    public ResponseEntity<RestaurantDetailsRequest> getRestaurantDetails(
+            @PathVariable("id") Long restaurantId
     )
     {
-      Optional<Restaurant> targetRestaurant =  restaurantRepository.findById( RestaurantId );
-      if( targetRestaurant.isPresent())
-      {
-        return  ResponseEntity.ok(targetRestaurant.get());
-      }
-      else{
-          return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                  .body(null);
-      }
+        RestaurantDetailsRequest RestaurantDetails = restaurantService.getRestaurantDetails( restaurantId );
+        return ResponseEntity.ok(RestaurantDetails);
     }
+
+
 }

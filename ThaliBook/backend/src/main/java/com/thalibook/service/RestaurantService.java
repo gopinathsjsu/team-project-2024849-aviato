@@ -3,6 +3,7 @@ package com.thalibook.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
+import com.thalibook.dto.RestaurantDetailsRequest;
 import com.thalibook.exception.ResourceNotFoundException;
 import com.thalibook.model.Booking;
 import com.thalibook.model.Restaurant;
@@ -22,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -100,6 +102,28 @@ public class RestaurantService {
 
         return bookings.isEmpty();
     }
+
+    public RestaurantDetailsRequest getRestaurantDetails(Long restaurantId) {
+        Restaurant obj = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new RuntimeException("Restaurant not found with id: " + restaurantId));
+
+        RestaurantDetailsRequest details = new RestaurantDetailsRequest();
+        details.setRestaurantId(obj.getRestaurantId());
+        details.setManagerId(obj.getManagerId());
+        details.setName(obj.getName());
+        details.setAddress(obj.getAddress());
+        details.setCity(obj.getCity());
+        details.setState(obj.getState());
+        details.setZipCode(obj.getZipCode());
+        details.setPhone(obj.getPhone());
+        details.setDescription(obj.getDescription());
+        details.setCuisine(obj.getCuisine());
+        details.setCostRating(obj.getCostRating());
+        details.setHours(obj.getHours());
+
+        return details;
+    }
+
 
     @Transactional
     public void approveRestaurant(Long id) {
