@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "review")
 @Getter
@@ -29,4 +31,7 @@ public class Review {
 
     @Column( nullable = false, length = 400 )
     private String comment;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }
