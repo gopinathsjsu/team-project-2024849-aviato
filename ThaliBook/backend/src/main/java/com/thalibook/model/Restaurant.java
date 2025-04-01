@@ -59,8 +59,11 @@ public class Restaurant {
     @Column(name = "photo_url", length = 255)
     private String photoUrl;
 
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Review> reviews = new ArrayList<>();
+    @Column(name = "average_rating")
+    private Double averageRating;
+
+    @Column(name = "total_reviews")
+    private Integer totalReviews;
 
     @Column(name = "is_approved")
     private Boolean isApproved;
