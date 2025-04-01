@@ -1,16 +1,31 @@
 package com.thalibook.repository;
 
 import com.thalibook.model.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.Optional;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import java.util.List;
-import java.util.ArrayList;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    //Get All Reviews belonging to a particular user
+
     List<Review> findByUserUserId(Long userId);
-   //Get All Reviews for a particular restaurant
-   List<Review> findByRestaurantRestaurantId( Long restaurantId);
+
+    List<Review> findByRestaurantRestaurantId(Long restaurantId);
+
+    Page<Review> findByRestaurantRestaurantId(Long restaurantId, Pageable pageable);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.restaurant.restaurantId = :restaurantId")
+    Double findAverageRatingByRestaurantId(@Param("restaurantId") Long restaurantId);
+
+    Integer countByRestaurantRestaurantId(Long restaurantId);
+
+    boolean existsByUserUserIdAndRestaurantRestaurantId(Long userId, Long restaurantId);
+
+    List<Review> findByRestaurantRestaurantIdAndRating(Long restaurantId, int rating);
+
+    List<Review> findTop10ByRestaurantRestaurantIdOrderByCreatedAtDesc(Long restaurantId);
 }
