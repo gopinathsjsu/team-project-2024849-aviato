@@ -3,10 +3,14 @@ package com.thalibook.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
+import com.thalibook.dto.RestaurantResponse;
+import com.thalibook.dto.RestaurantDetailResponse;
 import com.thalibook.model.Booking;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.BookingRepository;
 import com.thalibook.repository.RestaurantRepository;
+import com.thalibook.service.BookingService;
+import com.thalibook.service.ReviewService;
 import com.thalibook.repository.TablesAvailabilityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,11 +26,17 @@ public class RestaurantService {
 
     @Autowired
     private BookingRepository bookingRepository;
+    private  BookingService bookingService;
+    private  ReviewService reviewService;
 
     private final RestaurantRepository restaurantRepository;
 
-    public RestaurantService(RestaurantRepository restaurantRepository) {
+    public RestaurantService(RestaurantRepository restaurantRepository,
+                             BookingService bookingService,
+                             ReviewService reviewService ) {
         this.restaurantRepository = restaurantRepository;
+        this.bookingService       = bookingService;
+        this.reviewService        = reviewService;
     }
 
     public Restaurant createRestaurant(CreateRestaurantRequest request, Long managerId) {
@@ -92,4 +102,42 @@ public class RestaurantService {
 
         return bookings.isEmpty();
     }
+
+    public RestaurantResponse getRestaurantDetails(Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
+
+        RestaurantDetailResponse response = convertToDetailResponse(restaurant);
+        response.setBookingsToday(bookingService.getBookingsCountForToday(restaurantId));
+
+        // Optionally include recent reviews
+        // List<ReviewResponse> recentReviews = reviewService.getRecentReviewsForRestaurant(restaurantId, 5);
+       //  response.setRecentReviews(recentReviews);
+
+        return response;
+    }
+
+
+    public RestaurantResponse getRestaurantSummary(Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
+
+        RestaurantResponse response = convertToBasicResponse(restaurant);
+        response.setBookingsToday(bookingService.getBookingsCountForToday(restaurantId));
+
+        return response;
+    }
+
+    private RestaurantResponse convertToBasicResponse(Restaurant restaurant) {
+        RestaurantResponse response = new RestaurantResponse();
+        return response;
+    }
+
+    private RestaurantDetailResponse convertToDetailResponse(Restaurant restaurant) {
+        RestaurantDetailResponse response = new RestaurantDetailResponse();
+
+        return response;
+    }
+
+
 }

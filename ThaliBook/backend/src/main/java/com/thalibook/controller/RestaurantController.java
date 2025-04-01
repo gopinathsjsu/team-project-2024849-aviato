@@ -2,6 +2,7 @@ package com.thalibook.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
+import com.thalibook.dto.RestaurantResponse;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.service.RestaurantService;
@@ -112,18 +113,12 @@ public class RestaurantController {
     }
 
     @GetMapping("/details")
-    public ResponseEntity<Restaurant> getRestaurantDetails(
-          @RequestParam Long RestaurantId
-    )
-    {
-      Optional<Restaurant> targetRestaurant =  restaurantRepository.findById( RestaurantId );
-      if( targetRestaurant.isPresent())
-      {
-        return  ResponseEntity.ok(targetRestaurant.get());
-      }
-      else{
-          return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                  .body(null);
-      }
+    public ResponseEntity<RestaurantResponse> getRestaurantDetails(@RequestParam Long restaurantId) {
+        try {
+            RestaurantResponse restaurant = restaurantService.getRestaurantDetails(restaurantId);
+            return ResponseEntity.ok(restaurant);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 }
