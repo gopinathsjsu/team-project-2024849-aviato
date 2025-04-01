@@ -34,4 +34,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 """)
     List<Booking> findAllByRestaurantManagerId(@Param("managerId") Long managerId);
 
+    Integer countByRestaurantIdAndDate(Long restaurantId, LocalDate date);
+
+    Integer countByRestaurantIdAndDateAndStatus(Long restaurantId, LocalDate date, String status);
+
+    List<Booking> findByRestaurantIdAndDate(Long restaurantId, LocalDate date);
+
+    List<Booking> findByRestaurantIdAndDateAndTime(Long restaurantId, LocalDate date, LocalTime time);
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.restaurantId = :restaurantId AND b.date = :date")
+    Integer countTodaysBookings(@Param("restaurantId") Long restaurantId, @Param("date") LocalDate date);
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.restaurantId = :restaurantId " +
+            "AND b.date = :date AND b.status = :status")
+    Integer countBookingsByStatus(@Param("restaurantId") Long restaurantId,
+                                  @Param("date") LocalDate date,
+                                  @Param("status") String status);
+
 }
