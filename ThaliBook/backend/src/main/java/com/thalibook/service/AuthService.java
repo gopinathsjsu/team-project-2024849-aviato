@@ -35,15 +35,12 @@ public class AuthService {
     public String login(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-//        System.out.println(password +" "+ user.getPasswordHash()+" ");
-//        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-        if (!password.equals(user.getPasswordHash())) {
+
+        // ✅ Use passwordEncoder.matches to validate the hash
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new RuntimeException("Invalid password");
         }
 
-        // You can encode more info here, like role:userId
         return JwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRole());
-
     }
-
 }
