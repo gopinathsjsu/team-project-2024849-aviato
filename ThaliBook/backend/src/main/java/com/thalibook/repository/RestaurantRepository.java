@@ -21,4 +21,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("state") String state,
             @Param("zip") String zip
     );
+
+    List<Restaurant> findByIsApprovedFalse();
+
 }

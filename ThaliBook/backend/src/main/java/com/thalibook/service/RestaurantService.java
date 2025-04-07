@@ -3,13 +3,17 @@ package com.thalibook.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
+import com.thalibook.exception.ResourceNotFoundException;
 import com.thalibook.model.Booking;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.BookingRepository;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.repository.TablesAvailabilityRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -92,4 +96,17 @@ public class RestaurantService {
 
         return bookings.isEmpty();
     }
+
+    @Transactional
+    public void approveRestaurant(Long id) {
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
+        restaurant.setIsApproved(true);
+        restaurantRepository.save(restaurant);
+    }
+
+    public List<Restaurant> getPendingRestaurants() {
+        return restaurantRepository.findByIsApprovedFalse();
+    }
+
 }

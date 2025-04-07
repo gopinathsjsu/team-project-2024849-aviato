@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -55,6 +56,20 @@ public class RestaurantController {
 
         Restaurant saved = restaurantService.createRestaurant(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> approveRestaurant(@PathVariable Long id) {
+        restaurantService.approveRestaurant(id);
+        return ResponseEntity.ok("Restaurant approved!");
+    }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Restaurant>> getPendingRestaurants() {
+        List<Restaurant> pending = restaurantService.getPendingRestaurants();
+        return ResponseEntity.ok(pending);
     }
 
 
