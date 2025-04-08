@@ -19,6 +19,7 @@ import com.thalibook.model.TablesAvailability;
 import com.thalibook.repository.TablesAvailabilityRepository;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -72,6 +73,20 @@ public class RestaurantController {
         return ResponseEntity.ok(pending);
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT_MANAGER')")
+    public ResponseEntity<Restaurant> updateRestaurant(
+            @PathVariable Long id,
+            @RequestBody Restaurant updatedDetails) {
+
+        Restaurant updated = null;
+        try {
+            updated = restaurantService.updateRestaurant(id, updatedDetails);
+        } catch (AccessDeniedException e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok(updated);
+    }
 
     @GetMapping("/search")
     public ResponseEntity<List<Restaurant>> searchRestaurants(

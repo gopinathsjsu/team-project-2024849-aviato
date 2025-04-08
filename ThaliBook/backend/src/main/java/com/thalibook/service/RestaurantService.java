@@ -12,13 +12,17 @@ import com.thalibook.repository.TablesAvailabilityRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -107,6 +111,38 @@ public class RestaurantService {
 
     public List<Restaurant> getPendingRestaurants() {
         return restaurantRepository.findByIsApprovedFalse();
+    }
+
+    public Restaurant updateRestaurant(Long id, Restaurant updatedDetails) throws AccessDeniedException {
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
+
+        // Get current authenticated user details
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
+        String currentRole = (String) details.get("role");
+        Long currentUserId = (Long) details.get("userId");
+
+        // ⚠ Check if manager is allowed to update this restaurant
+        if ("RESTAURANT_MANAGER".equalsIgnoreCase(currentRole)
+                && !restaurant.getManagerId().equals(currentUserId)) {
+            throw new AccessDeniedException("You are not authorized to update this restaurant.");
+        }
+
+        // Apply updates
+        restaurant.setName(updatedDetails.getName());
+        restaurant.setAddress(updatedDetails.getAddress());
+        restaurant.setCity(updatedDetails.getCity());
+        restaurant.setState(updatedDetails.getState());
+        restaurant.setZipCode(updatedDetails.getZipCode());
+        restaurant.setPhone(updatedDetails.getPhone());
+        restaurant.setDescription(updatedDetails.getDescription());
+        restaurant.setCuisine(updatedDetails.getCuisine());
+        restaurant.setCostRating(updatedDetails.getCostRating());
+        restaurant.setHours(updatedDetails.getHours());
+        restaurant.setPhotoUrl(updatedDetails.getPhotoUrl());
+
+        return restaurantRepository.save(restaurant);
     }
 
 }
