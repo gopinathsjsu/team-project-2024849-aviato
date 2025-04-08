@@ -203,12 +203,37 @@ public class RestaurantService {
 
     private RestaurantResponse convertToBasicResponse(Restaurant restaurant) {
         RestaurantResponse response = new RestaurantResponse();
+        response.setRestaurantId(restaurant.getRestaurantId());
+        response.setName(restaurant.getName());
+        response.setAddress(restaurant.getAddress());
+        response.setCity(restaurant.getCity());
+        response.setCuisine(restaurant.getCuisine());
+        response.setCostRating(restaurant.getCostRating());
+        response.setAverageRating(restaurant.getAverageRating());
+        response.setTotalReviews(restaurant.getTotalReviews());
+        response.setPhotoUrl(restaurant.getPhotoUrl());
         return response;
     }
 
     private RestaurantDetailResponse convertToDetailResponse(Restaurant restaurant) {
         RestaurantDetailResponse response = new RestaurantDetailResponse();
 
+        response.setRestaurantId(restaurant.getRestaurantId());
+        response.setName(restaurant.getName());
+        response.setAddress(restaurant.getAddress());
+        response.setCity(restaurant.getCity());
+        response.setCuisine(restaurant.getCuisine());
+        response.setCostRating(restaurant.getCostRating());
+        response.setAverageRating(restaurant.getAverageRating());
+        response.setTotalReviews(restaurant.getTotalReviews());
+        response.setPhotoUrl(restaurant.getPhotoUrl());
+
+        response.setDescription(restaurant.getDescription());
+        response.setState(restaurant.getState());
+        response.setZipCode(restaurant.getZipCode());
+        response.setPhone(restaurant.getPhone());
+        response.setHours(restaurant.getHours());
+        response.setIsApproved(restaurant.getIsApproved());
         return response;
     }
 
