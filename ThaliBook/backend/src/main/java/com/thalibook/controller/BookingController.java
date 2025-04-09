@@ -31,7 +31,9 @@ public class BookingController {
             String token = authHeader.substring(7);
             String userEmail = JwtUtil.getSubject(token);
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Long userId = (Long) auth.getDetails();
+            Map<String, Object> details = (Map<String, Object>) auth.getDetails();
+
+            Long userId = (Long) details.get("userId");
             // Here you should resolve userId from email using UserRepository
 
             Booking booking = bookingService.createBooking(userId, request);
