@@ -10,6 +10,7 @@ import com.thalibook.model.Restaurant;
 import com.thalibook.repository.BookingRepository;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.repository.TablesAvailabilityRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -167,6 +168,16 @@ public class RestaurantService {
         restaurant.setPhotoUrl(updatedDetails.getPhotoUrl());
 
         return restaurantRepository.save(restaurant);
+    }
+
+    public boolean isManagerOfRestaurant(Long managerId, Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+        return restaurant.getManagerId().equals(managerId);
+    }
+
+    public void deleteRestaurant(Long restaurantId) {
+        restaurantRepository.deleteById(restaurantId);
     }
 
 }

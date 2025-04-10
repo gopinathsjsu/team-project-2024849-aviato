@@ -151,5 +151,19 @@ public class RestaurantController {
         return ResponseEntity.ok(RestaurantDetails);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteRestaurant(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> userDetails = (Map<String, Object>) auth.getDetails();
+        String role = (String) userDetails.get("role");
+        Long userId = ((Number) userDetails.get("userId")).longValue();
+
+        if (!role.equals("ADMIN") && !restaurantService.isManagerOfRestaurant(userId, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not authorized to delete this restaurant.");
+        }
+
+        restaurantService.deleteRestaurant(id);
+        return ResponseEntity.ok("Restaurant deleted successfully.");
+    }
 
 }
