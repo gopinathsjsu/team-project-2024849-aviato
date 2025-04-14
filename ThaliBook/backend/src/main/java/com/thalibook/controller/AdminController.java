@@ -1,10 +1,12 @@
 package com.thalibook.controller;
 
 import com.thalibook.dto.TopRestaurantDTO;
+import com.thalibook.model.Restaurant;
 import com.thalibook.repository.BookingRepository;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.repository.UserRepository;
 import com.thalibook.service.AdminService;
+import com.thalibook.service.RestaurantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,15 +27,18 @@ public class AdminController {
     private final RestaurantRepository restaurantRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final RestaurantService restaurantService;
 
     public AdminController(RestaurantRepository restaurantRepository,
                            BookingRepository bookingRepository,
                            UserRepository userRepository,
-                           AdminService adminService) {
+                           AdminService adminService,
+                           RestaurantService restaurantService ) {
         this.restaurantRepository = restaurantRepository;
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.adminService = adminService;
+        this.restaurantService = restaurantService;
     }
 
     @GetMapping("/stats")
@@ -68,6 +73,12 @@ public class AdminController {
     public ResponseEntity<List<TopRestaurantDTO>> getTopRestaurants() {
         List<TopRestaurantDTO> topRestaurants = adminService.getTop5MostBookedRestaurants();
         return ResponseEntity.ok(topRestaurants);
+    }
+
+    @GetMapping("/allRestaurants")
+    public ResponseEntity<List<Restaurant>> getAllRestaurants() {
+      List< Restaurant > allRestaurants = restaurantService.getAllRestaurants();
+      return ResponseEntity.ok( allRestaurants );
     }
 
 

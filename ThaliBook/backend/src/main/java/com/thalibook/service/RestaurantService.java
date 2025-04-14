@@ -306,6 +306,8 @@ public class RestaurantService {
     public List<Restaurant> getRestaurantsByManagerId(Long managerId) {
         return restaurantRepository.findByManagerId(managerId);
     }
-
+    public List<Restaurant> getAllRestaurants(){
+        return restaurantRepository.findAll();
+    }
 
 }
