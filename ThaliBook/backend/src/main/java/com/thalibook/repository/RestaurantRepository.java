@@ -24,4 +24,5 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     List<Restaurant> findByIsApprovedFalse();
 
+    long countByIsApproved(boolean isApproved);
 }
