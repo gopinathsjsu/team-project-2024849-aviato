@@ -1,72 +1,150 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+// src/pages/Register.jsx
+import { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser } from '@/store/thunks/authThunks';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const registerSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  phone: z.string().regex(/^\d{3}-\d{4}$/, { 
+    message: 'Phone number must be in format: 123-4567' 
+  }),
+  role: z.string().refine(val => ['CUSTOMER', 'RESTAURANT_MANAGER'].includes(val), {
+    message: 'Please select a valid role'
+  })
+});
 
 export default function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [message, setMessage] = useState('');
   const navigate = useNavigate();
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/auth/register`,
-        {
-          email,
-          password,
-          phone,
-          role: 'CUSTOMER', // hardcoded role
-        }
-      );
-      setMessage('✅ Registration successful. Redirecting to login...');
-      setTimeout(() => navigate('/login'), 2000);
-    } catch (error) {
-      console.error('❌ Registration failed:', error.response || error);
-      setMessage('❌ Registration failed. Try a different email.');
+  const dispatch = useDispatch();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl') || '/';
+  
+  const { loading, error } = useSelector(state => state.auth);
+  
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      role: 'CUSTOMER'
+    }
+  });
+  
+  const role = watch('role');
+  
+  const onSubmit = async (data) => {
+    const result = await dispatch(registerUser(data));
+    if (result.meta.requestStatus === 'fulfilled') {
+      navigate(returnUrl);
     }
   };
-
+  
   return (
-    <div style={{ padding: '40px', maxWidth: '400px', margin: '0 auto' }}>
-      <h2 style={{ marginBottom: '20px' }}>Register as Customer</h2>
-      <form onSubmit={handleRegister}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-        />
-        <input
-          type="text"
-          placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-        />
-        <button
-          type="submit"
-          style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: '#fff' }}
-        >
-          Register
-        </button>
-      </form>
-      <p style={{ marginTop: '15px', color: message.startsWith('✅') ? 'green' : 'red' }}>
-        {message}
-      </p>
+    <div className="container mx-auto px-4 py-12">
+      <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
+        <h1 className="text-2xl font-bold mb-6 text-center">Create an Account</h1>
+        
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Email address"
+              {...register('email')}
+              className={errors.email ? 'border-red-500' : ''}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Password"
+              {...register('password')}
+              className={errors.password ? 'border-red-500' : ''}
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              type="text"
+              placeholder="123-4567"
+              {...register('phone')}
+              className={errors.phone ? 'border-red-500' : ''}
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="role">I am a</Label>
+            <Select 
+              defaultValue="CUSTOMER" 
+              onValueChange={(value) => setValue('role', value)}
+            >
+              <SelectTrigger id="role">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CUSTOMER">Customer</SelectItem>
+                <SelectItem value="RESTAURANT_MANAGER">Restaurant Manager</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.role && (
+              <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
+            )}
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
+          </Button>
+        </form>
+        
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Already have an account?{' '}
+            <Link 
+              to={`/login${returnUrl !== '/' ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`}
+              className="text-blue-600 hover:underline"
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
