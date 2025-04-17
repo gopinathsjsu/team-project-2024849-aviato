@@ -4,24 +4,38 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.BookingRequest;
 import com.thalibook.model.Booking;
+import com.thalibook.model.Restaurant;
 import com.thalibook.model.TablesAvailability;
+import com.thalibook.model.User;
 import com.thalibook.repository.BookingRepository;
+import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.repository.TablesAvailabilityRepository;
+import com.thalibook.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final TablesAvailabilityRepository tablesAvailabilityRepository;
+    private final RestaurantRepository restaurantRepository;
+    private final UserRepository userRepository;
 
-    public BookingService(BookingRepository bookingRepository, TablesAvailabilityRepository tablesAvailabilityRepository) {
+    @Autowired
+    private EmailService emailService;
+
+    public BookingService(BookingRepository bookingRepository, TablesAvailabilityRepository tablesAvailabilityRepository
+            , UserRepository userRepository, RestaurantRepository restaurantRepository) {
         this.bookingRepository = bookingRepository;
         this.tablesAvailabilityRepository = tablesAvailabilityRepository;
+        this.userRepository = userRepository;
+        this.restaurantRepository = restaurantRepository;
     }
 
     public Booking createBooking(Long userId, BookingRequest request) throws Exception {
@@ -37,7 +51,8 @@ public class BookingService {
                 List<Booking> conflicts = bookingRepository.findByTableIdAndDateAndTimeInAndStatusIn(
                         table.getTableId(),
                         request.getDate(),
-                        List.of(request.getTime(), request.getTime().minusMinutes(30), request.getTime().plusMinutes(30)),
+                        List.of(request.getTime(), request.getTime().minusMinutes(30),
+                                request.getTime().plusMinutes(30)),
                         List.of("CONFIRMED", "PENDING")
                 );
 
@@ -73,6 +88,32 @@ public class BookingService {
         return bookingRepository.findAll();
     }
 
+    public boolean isManagerOfBooking(Long managerId, Long bookingId) {
+        // Check if the restaurant manager owns the booking’s restaurant
+        return bookingRepository.existsByBookingIdAndRestaurantManagerId(bookingId, managerId);
+    }
+
+
+    public boolean confirmBooking(Long bookingId) {
+        Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
+        if (bookingOpt.isPresent()) {
+            Booking booking = bookingOpt.get();
+            if (!booking.getStatus().equals("CONFIRMED")) {
+                booking.setStatus("CONFIRMED");
+                bookingRepository.save(booking);
+                Restaurant restaurant = restaurantRepository.findById(booking.getRestaurantId()).orElseThrow();
+                User user = userRepository.findById(booking.getUserId()).orElseThrow();
+                String subject = "Your Booking is Confirmed!";
+                String body = "Hi, your booking at " + restaurant.getName() +
+                        " on " + booking.getDate() + " at " + booking.getTime() + " has been confirmed.";
+
+                emailService.sendEmail(user.getEmail(), subject, body);
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public void cancelBooking(Long bookingId, Long userId, String role) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -93,6 +134,7 @@ public class BookingService {
         booking.setStatus("CANCELLED");
         bookingRepository.save(booking);
     }
+
 
 }
 
