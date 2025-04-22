@@ -4,8 +4,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '@/store/thunks/authThunks';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +27,10 @@ export default function Login() {
   
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    }
   });
   
   const onSubmit = async (data) => {
@@ -58,7 +62,7 @@ export default function Login() {
               type="email"
               placeholder="Email address"
               {...register('email')}
-              className={errors.email ? 'border-red-500' : ''}
+              className={errors.email ? 'border-red-500' : 'mt-2'}
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
@@ -72,7 +76,7 @@ export default function Login() {
               type="password"
               placeholder="Password"
               {...register('password')}
-              className={errors.password ? 'border-red-500' : ''}
+              className={errors.password ? 'border-red-500' : 'mt-2'}
             />
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
@@ -81,7 +85,7 @@ export default function Login() {
           
           <Button 
             type="submit" 
-            className="w-full"
+            className="w-full bg-orange-600 hover:bg-orange-700"
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}
@@ -93,7 +97,7 @@ export default function Login() {
             Don't have an account?{' '}
             <Link 
               to={`/register${returnUrl !== '/' ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`}
-              className="text-blue-600 hover:underline"
+              className="text-orange-600 hover:underline"
             >
               Sign up
             </Link>

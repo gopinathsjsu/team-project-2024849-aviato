@@ -11,13 +11,15 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 export default function Search() {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
-  const { restaurants, loading, error } = useSelector(state => state.restaurant);
+  const { restaurants, loading } = useSelector(state => state.restaurant);
   
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markers = useRef([]);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [visibleRestaurants, setVisibleRestaurants] = useState([]);
+  const [geocodingProgress, setGeocodingProgress] = useState(0);
+  const [geocodingTotal, setGeocodingTotal] = useState(0);
   
   const date = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const time = searchParams.get('time') || '19:00';
@@ -47,33 +49,70 @@ export default function Search() {
         const restaurantsWithCoordinates = [];
         const bounds = new mapboxgl.default.LngLatBounds();
         
-        // In a real application, coordinates would come from your backend
-        // For demo purposes, we'll add mock coordinates for West Coast cities
-        const mockCoordinates = {
-          'Portland, OR': [-122.6784, 45.5152],
-          'Seattle, WA': [-122.3321, 47.6062],
-          'San Francisco, CA': [-122.4194, 37.7749],
-          'Los Angeles, CA': [-118.2437, 34.0522],
-          'San Diego, CA': [-117.1611, 32.7157],
-        };
+        // Set up for geocoding
+        setGeocodingTotal(restaurants.length);
+        setGeocodingProgress(0);
         
-        restaurants.forEach(restaurant => {
-          const cityState = `${restaurant.city}, ${restaurant.state}`;
-          const coords = mockCoordinates[cityState] || [-122.4194, 37.7749]; // Default to SF
-          
-          bounds.extend(coords);
-          restaurantsWithCoordinates.push({
-            ...restaurant,
-            coordinates: coords
-          });
-        });
+        // Process each restaurant to get coordinates
+        for (let i = 0; i < restaurants.length; i++) {
+          const restaurant = restaurants[i];
+          try {
+            // Construct the full address
+            const address = `${restaurant.address || ''}, ${restaurant.city}, ${restaurant.state} ${restaurant.zipCode || ''}`;
+            console.log(`Geocoding address: ${address}`);
+            
+            // Call Mapbox Geocoding API
+            const response = await fetch(
+              `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.default.accessToken}`
+            );
+            
+            if (!response.ok) {
+              console.error(`Geocoding error for ${restaurant.name}: ${response.status}`);
+              continue;
+            }
+            
+            const data = await response.json();
+            
+            if (!data.features || data.features.length === 0) {
+              console.error(`No location found for ${restaurant.name}`);
+              continue;
+            }
+            
+            // Get coordinates from the first result
+            const coordinates = data.features[0].center;
+            console.log(`Found coordinates for ${restaurant.name}: ${coordinates}`);
+            
+            // Add to bounds
+            bounds.extend(coordinates);
+            
+            // Add to our list with coordinates
+            restaurantsWithCoordinates.push({
+              ...restaurant,
+              coordinates: coordinates
+            });
+            
+            // Update progress
+            setGeocodingProgress(i + 1);
+          } catch (error) {
+            console.error(`Error geocoding ${restaurant.name}:`, error);
+          }
+        }
+        
+        // If no restaurants were geocoded successfully, use a default location
+        if (restaurantsWithCoordinates.length === 0) {
+          console.warn("No restaurants could be geocoded, using default coordinates");
+          // Default to San Francisco
+          bounds.extend([-122.4194, 37.7749]);
+        }
         
         // Create the map
         const newMap = new mapboxgl.default.Map({
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/streets-v11',
           bounds: bounds,
-          fitBoundsOptions: { padding: 50 }
+          fitBoundsOptions: { padding: 50 },
+          minZoom: 3,
+          maxZoom: 15
         });
         
         // Add navigation controls
@@ -109,6 +148,12 @@ export default function Search() {
           markers.current.push(marker);
         });
         
+        // Set map as loaded
+        newMap.on('load', () => {
+          setMapLoaded(true);
+          map.current = newMap;
+        });
+        
         // Store restaurants with coordinates
         setVisibleRestaurants(restaurantsWithCoordinates);
         
@@ -121,12 +166,6 @@ export default function Search() {
           });
           
           setVisibleRestaurants(newVisibleRestaurants);
-        });
-        
-        // Set map as loaded
-        newMap.on('load', () => {
-          setMapLoaded(true);
-          map.current = newMap;
         });
         
       } catch (error) {
@@ -192,7 +231,7 @@ export default function Search() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Restaurant list */}
-        <div className="w-full md:w-2/5 flex flex-col overflow-hidden border-r border-gray-200">
+        <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col overflow-hidden border-r border-gray-200">
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-bold">
               {visibleRestaurants.length} restaurant{visibleRestaurants.length !== 1 ? 's' : ''} available
@@ -203,6 +242,12 @@ export default function Search() {
             {loading ? (
               <div className="flex justify-center items-center h-full">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500"></div>
+              </div>
+            ) : geocodingProgress > 0 && geocodingProgress < geocodingTotal ? (
+              <div className="flex flex-col justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-600">Geocoding restaurant addresses...</p>
+                <p className="text-sm text-gray-500 mt-2">{geocodingProgress} of {geocodingTotal}</p>
               </div>
             ) : visibleRestaurants.length === 0 ? (
               <div className="flex justify-center items-center h-full">
@@ -244,13 +289,13 @@ export default function Search() {
                         
                         <div className="flex flex-wrap gap-2">
                           {['18:00', '18:30', '19:00', '19:30', '20:00'].map(timeSlot => (
-                            <Link 
-                              key={timeSlot} 
+                            <Link
+                              key={timeSlot}
                               to={`/booking/${restaurant.restaurantId}?date=${date}&time=${timeSlot}&partySize=${partySize}`}
                             >
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className={`min-w-16 ${timeSlot === time ? 'bg-orange-600 text-white border-orange-600' : 'border-orange-400 text-orange-600 hover:bg-orange-50'}`}
                               >
                                 {timeSlot}
@@ -268,8 +313,8 @@ export default function Search() {
         </div>
         
         {/* Map */}
-        <div className="hidden md:block md:w-3/5 relative">
-          <div ref={mapContainer} className="absolute inset-0" />
+        <div className="hidden md:block md:w-1/2 lg:w-3/5 relative h-full">
+          <div ref={mapContainer} className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }} />
           
           {!mapLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -279,13 +324,33 @@ export default function Search() {
           
           {/* Map controls */}
           <div className="absolute top-3 right-3 z-10 flex flex-col space-y-2">
-            <button className="bg-white p-2 rounded-md shadow-md hover:bg-gray-100 focus:outline-none" title="Zoom in">
+            <button
+              className="bg-white p-2 rounded-md shadow-md hover:bg-gray-100 focus:outline-none"
+              title="Zoom in"
+              onClick={() => map.current && map.current.zoomIn()}
+            >
               <Plus className="h-5 w-5 text-gray-700" />
             </button>
-            <button className="bg-white p-2 rounded-md shadow-md hover:bg-gray-100 focus:outline-none" title="Zoom out">
+            <button
+              className="bg-white p-2 rounded-md shadow-md hover:bg-gray-100 focus:outline-none"
+              title="Zoom out"
+              onClick={() => map.current && map.current.zoomOut()}
+            >
               <Minus className="h-5 w-5 text-gray-700" />
             </button>
-            <button className="bg-white p-2 rounded-md shadow-md hover:bg-gray-100 focus:outline-none" title="Full screen">
+            <button
+              className="bg-white p-2 rounded-md shadow-md hover:bg-gray-100 focus:outline-none"
+              title="Full screen"
+              onClick={() => {
+                if (map.current) {
+                  if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                  } else {
+                    mapContainer.current.requestFullscreen();
+                  }
+                }
+              }}
+            >
               <Maximize className="h-5 w-5 text-gray-700" />
             </button>
           </div>

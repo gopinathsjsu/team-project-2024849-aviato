@@ -4,8 +4,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '@/store/thunks/authThunks';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,9 @@ export default function Register() {
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      email: '',
+      password: '',
+      phone: '',
       role: 'CUSTOMER'
     }
   });
@@ -70,7 +73,7 @@ export default function Register() {
               type="email"
               placeholder="Email address"
               {...register('email')}
-              className={errors.email ? 'border-red-500' : ''}
+              className={errors.email ? 'border-red-500' : 'mt-2'}
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
@@ -84,7 +87,7 @@ export default function Register() {
               type="password"
               placeholder="Password"
               {...register('password')}
-              className={errors.password ? 'border-red-500' : ''}
+              className={errors.password ? 'border-red-500' : 'mt-2'}
             />
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
@@ -98,7 +101,7 @@ export default function Register() {
               type="text"
               placeholder="123-4567"
               {...register('phone')}
-              className={errors.phone ? 'border-red-500' : ''}
+              className={errors.phone ? 'border-red-500' : 'mt-2'}
             />
             {errors.phone && (
               <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
@@ -111,7 +114,7 @@ export default function Register() {
               defaultValue="CUSTOMER" 
               onValueChange={(value) => setValue('role', value)}
             >
-              <SelectTrigger id="role">
+              <SelectTrigger id="role" className={errors.role ? 'border-red-500' : 'mt-2'}>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
@@ -124,9 +127,18 @@ export default function Register() {
             )}
           </div>
           
+          {role === 'RESTAURANT_MANAGER' && (
+            <div className="p-4 bg-gray-50 rounded-md">
+              <p className="text-sm text-gray-600">
+                As a Restaurant Manager, you'll be able to add and manage your restaurant listing after registration.
+                Your restaurant will need to be approved by an administrator before it appears in search results.
+              </p>
+            </div>
+          )}
+          
           <Button 
             type="submit" 
-            className="w-full"
+            className="w-full bg-orange-600 hover:bg-orange-700"
             disabled={loading}
           >
             {loading ? 'Creating account...' : 'Create Account'}
@@ -138,7 +150,7 @@ export default function Register() {
             Already have an account?{' '}
             <Link 
               to={`/login${returnUrl !== '/' ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`}
-              className="text-blue-600 hover:underline"
+              className="text-orange-600 hover:underline"
             >
               Sign in
             </Link>
