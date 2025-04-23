@@ -67,48 +67,57 @@ export default function RestaurantMap({ restaurant }) {
         const mapboxgl = await import('mapbox-gl');
         mapboxgl.default.accessToken = 'pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg';
         
-        // Add a small delay to ensure DOM is fully ready
-        setTimeout(() => {
-          // Check if map container is still in the DOM
-          if (!mapContainer.current) {
-            console.log("Map container no longer in DOM");
-            return;
-          }
+        // Check if map container is still in the DOM
+        if (!mapContainer.current) {
+          console.log("Map container no longer in DOM");
+          return;
+        }
+        
+        console.log("Creating map instance");
+        const map = new mapboxgl.default.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v11',
+          center: coordinates,
+          zoom: 14,
+          preserveDrawingBuffer: true // Helps with rendering issues
+        });
+        
+        // Force a resize after map is created to ensure proper dimensions
+        window.addEventListener('resize', () => {
+          if (map) map.resize();
+        });
+        
+        // Add a handler for when the map is ready
+        map.on('load', () => {
+          console.log("Map loaded successfully");
+          setMapLoaded(true);
+          setMapInstance(map);
           
-          console.log("Creating map instance");
-          const map = new mapboxgl.default.Map({
-            container: mapContainer.current,
-            style: 'mapbox://styles/mapbox/streets-v11',
-            center: coordinates,
-            zoom: 14
-          });
+          // Force resize to ensure proper rendering
+          setTimeout(() => {
+            map.resize();
+          }, 0);
           
-          map.on('load', () => {
-            console.log("Map loaded successfully");
-            setMapLoaded(true);
-            setMapInstance(map);
-            
-            // Add navigation controls
-            map.addControl(new mapboxgl.default.NavigationControl());
-            
-            // Add marker for restaurant location
-            new mapboxgl.default.Marker()
-              .setLngLat(coordinates)
-              .setPopup(
-                new mapboxgl.default.Popup().setHTML(
-                  `<h3 style="font-weight: bold; margin-bottom: 4px;">${restaurant.name}</h3>
-                   <p style="margin: 0;">${restaurant.address}</p>
-                   <p style="margin: 0;">${restaurant.city}, ${restaurant.state} ${restaurant.zipCode}</p>`
-                )
+          // Add navigation controls
+          map.addControl(new mapboxgl.default.NavigationControl());
+          
+          // Add marker for restaurant location
+          new mapboxgl.default.Marker()
+            .setLngLat(coordinates)
+            .setPopup(
+              new mapboxgl.default.Popup().setHTML(
+                `<h3 style="font-weight: bold; margin-bottom: 4px;">${restaurant.name}</h3>
+                 <p style="margin: 0;">${restaurant.address}</p>
+                 <p style="margin: 0;">${restaurant.city}, ${restaurant.state} ${restaurant.zipCode}</p>`
               )
-              .addTo(map);
-          });
-          
-          map.on('error', (e) => {
-            console.error("Mapbox error:", e);
-            setError("Error loading map");
-          });
-        }, 300); // Small delay helps ensure DOM is ready
+            )
+            .addTo(map);
+        });
+        
+        map.on('error', (e) => {
+          console.error("Mapbox error:", e);
+          setError("Error loading map");
+        });
       } catch (error) {
         console.error("Map initialization error:", error);
         setError(error.message || "Error initializing map");
@@ -124,6 +133,11 @@ export default function RestaurantMap({ restaurant }) {
       if (mapInstance) {
         console.log("Removing map instance");
         mapInstance.remove();
+        
+        // Remove resize event listener
+        window.removeEventListener('resize', () => {
+          if (mapInstance) mapInstance.resize();
+        });
       }
     };
   }, [mapInstance]);
@@ -148,10 +162,9 @@ export default function RestaurantMap({ restaurant }) {
 
   return (
     <div className="rounded-lg overflow-hidden shadow-md">
-      <div 
-        ref={mapContainer} 
-        className="h-64 w-full" 
-        style={{ minHeight: "250px" }}
+      <div
+        ref={mapContainer}
+        className="restaurant-map-container"
       >
         {coordinates && !mapLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70">
