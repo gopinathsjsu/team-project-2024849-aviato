@@ -181,6 +181,11 @@ public class RestaurantService {
 
     public void deleteRestaurant(Long restaurantId) {
         restaurantRepository.deleteById(restaurantId);
+
     }
+    public List<Restaurant> getRestaurantsByManagerId(Long managerId) {
+        return restaurantRepository.findByManagerId(managerId);
+    }
+
 
 }
