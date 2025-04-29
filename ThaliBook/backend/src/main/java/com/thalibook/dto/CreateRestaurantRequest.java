@@ -45,4 +45,7 @@ public class CreateRestaurantRequest {
         @URL
         private String photoUrl;
 
+        private Double latitude;
+
+        private Double longitude;
 }

@@ -7,6 +7,8 @@ export const searchRestaurants = createAsyncThunk(
   async (searchParams, { rejectWithValue }) => {
     try {
       const response = await restaurantService.searchRestaurants(searchParams);
+      console.log("Search response:", response);
+
       return response;
     } catch (error) {
       return rejectWithValue(

@@ -63,15 +63,16 @@ public class RestaurantService {
         restaurant.setCostRating(request.getCostRating());
         restaurant.setHours(request.getHours());
         restaurant.setPhotoUrl(request.getPhotoUrl());
+        restaurant.setLatitude(request.getLatitude());
+        restaurant.setLongitude(request.getLongitude());
         restaurant.setIsApproved(false);
         restaurant.setCreatedAt(LocalDateTime.now());
 
         return restaurantRepository.save(restaurant);
     }
 
-
     public List<Restaurant> searchRestaurants(LocalDate date, LocalTime time, int partySize,
-                                              String city, String state, String zip) {
+            String city, String state, String zip) {
         List<Restaurant> restaurants = restaurantRepository.searchByLocation(city, state, zip);
         // ⏳ In the next step we'll add logic here to filter by table availability
         return restaurants;
@@ -82,8 +83,7 @@ public class RestaurantService {
         List<LocalTime> checkTimes = List.of(
                 time.minusMinutes(30),
                 time,
-                time.plusMinutes(30)
-        );
+                time.plusMinutes(30));
 
         // convert JSON booking_times (String) to LocalTime list
         List<LocalTime> slots = availableSlots.stream()
@@ -91,15 +91,15 @@ public class RestaurantService {
                 .collect(Collectors.toList());
 
         boolean slotExists = checkTimes.stream().anyMatch(slots::contains);
-        if (!slotExists) return false;
+        if (!slotExists)
+            return false;
 
         // check if already booked
         List<Booking> bookings = bookingRepository.findByTableIdAndDateAndTimeInAndStatusIn(
                 tableId,
                 date,
                 checkTimes,
-                List.of("CONFIRMED", "PENDING")
-        );
+                List.of("CONFIRMED", "PENDING"));
 
         return bookings.isEmpty();
     }
@@ -121,10 +121,11 @@ public class RestaurantService {
         details.setCuisine(obj.getCuisine());
         details.setCostRating(obj.getCostRating());
         details.setHours(obj.getHours());
+        details.setLatitude(obj.getLatitude());
+        details.setLongitude(obj.getLongitude());
 
         return details;
     }
-
 
     @Transactional
     public void approveRestaurant(Long id) {
@@ -166,6 +167,8 @@ public class RestaurantService {
         restaurant.setCostRating(updatedDetails.getCostRating());
         restaurant.setHours(updatedDetails.getHours());
         restaurant.setPhotoUrl(updatedDetails.getPhotoUrl());
+        restaurant.setLatitude(updatedDetails.getLatitude());
+        restaurant.setLongitude(updatedDetails.getLongitude());
 
         return restaurantRepository.save(restaurant);
     }
