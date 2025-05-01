@@ -30,6 +30,11 @@ public class BookingService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private NotificationService notificationService;
+
+
+
     public BookingService(BookingRepository bookingRepository, TablesAvailabilityRepository tablesAvailabilityRepository
             , UserRepository userRepository, RestaurantRepository restaurantRepository) {
         this.bookingRepository = bookingRepository;
@@ -67,7 +72,17 @@ public class BookingService {
                     booking.setStatus("PENDING");
                     booking.setCreatedAt(LocalDateTime.now());
 
-                    return bookingRepository.save(booking);
+                    Booking book = bookingRepository.save(booking);
+                    // fetch restaurant manager email & userId
+                    Restaurant restaurant = restaurantRepository.findById(booking.getRestaurantId()).orElseThrow();
+                    User manager = userRepository.findById(restaurant.getManagerId()).orElseThrow();
+
+                    String message = "A new booking has been placed at " + restaurant.getName() +
+                            " on " + booking.getDate() + " at " + booking.getTime() + ".";
+
+                    notificationService.notifyUser(manager.getUserId(), manager.getEmail(), message);
+                    return book;
+
                 }
             }
         }
@@ -102,12 +117,11 @@ public class BookingService {
                 booking.setStatus("CONFIRMED");
                 bookingRepository.save(booking);
                 Restaurant restaurant = restaurantRepository.findById(booking.getRestaurantId()).orElseThrow();
-                User user = userRepository.findById(booking.getUserId()).orElseThrow();
-                String subject = "Your Booking is Confirmed!";
-                String body = "Hi, your booking at " + restaurant.getName() +
-                        " on " + booking.getDate() + " at " + booking.getTime() + " has been confirmed.";
+                User customer = userRepository.findById(booking.getUserId()).orElseThrow();
 
-                emailService.sendEmail(user.getEmail(), subject, body);
+                String msg = "Your booking at " + restaurant.getName() + " on " + booking.getDate() + " at " + booking.getTime() + " is CONFIRMED";
+                notificationService.notifyUser(customer.getUserId(), customer.getEmail(), msg);
+
                 return true;
             }
         }

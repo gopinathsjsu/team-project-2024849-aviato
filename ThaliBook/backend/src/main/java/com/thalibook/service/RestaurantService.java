@@ -7,24 +7,22 @@ import com.thalibook.dto.RestaurantDetailsRequest;
 import com.thalibook.exception.ResourceNotFoundException;
 import com.thalibook.model.Booking;
 import com.thalibook.model.Restaurant;
+import com.thalibook.model.User;
 import com.thalibook.repository.BookingRepository;
 import com.thalibook.repository.RestaurantRepository;
-import com.thalibook.repository.TablesAvailabilityRepository;
+import com.thalibook.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -34,10 +32,17 @@ public class RestaurantService {
     @Autowired
     private BookingRepository bookingRepository;
 
-    private final RestaurantRepository restaurantRepository;
+    @Autowired
+    private NotificationService notificationService;
 
-    public RestaurantService(RestaurantRepository restaurantRepository) {
+    private final RestaurantRepository restaurantRepository;
+    private final UserRepository userRepository;
+
+
+
+    public RestaurantService(RestaurantRepository restaurantRepository, UserRepository userRepository) {
         this.restaurantRepository = restaurantRepository;
+        this.userRepository = userRepository;
     }
 
     public Restaurant createRestaurant(CreateRestaurantRequest request, Long managerId) {
@@ -68,7 +73,15 @@ public class RestaurantService {
         restaurant.setIsApproved(false);
         restaurant.setCreatedAt(LocalDateTime.now());
 
-        return restaurantRepository.save(restaurant);
+        Restaurant restaurant1 = restaurantRepository.save(restaurant);
+        // Fetch admin user (assuming you have at least one admin in users table)
+        User admin = userRepository.findFirstByRole("ADMIN")
+                .orElseThrow(() -> new RuntimeException("No admin found"));
+
+        String message = "A new restaurant '" + restaurant.getName() + "' was submitted for approval by manager " + managerId;
+
+        notificationService.notifyUser(admin.getUserId(), admin.getEmail(), message);
+        return restaurant1;
     }
 
     public List<Restaurant> searchRestaurants(LocalDate date, LocalTime time, int partySize,
@@ -133,6 +146,13 @@ public class RestaurantService {
                 .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id: " + id));
         restaurant.setIsApproved(true);
         restaurantRepository.save(restaurant);
+        User manager = userRepository.findById(restaurant.getManagerId())
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        String message = "Your restaurant '" + restaurant.getName() + "' has been approved by the admin!";
+
+        notificationService.notifyUser(manager.getUserId(), manager.getEmail(), message);
+
     }
 
     public List<Restaurant> getPendingRestaurants() {
