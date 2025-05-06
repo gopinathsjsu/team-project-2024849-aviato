@@ -1,9 +1,9 @@
 // src/routes/PrivateRoute.jsx
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function PrivateRoute() {
-  const { isAuthenticated } = useSelector(state => state.auth);
+  const { isAuthenticated } = useAuth();
   const location = useLocation();
 
   // If not authenticated, redirect to login page with return URL
