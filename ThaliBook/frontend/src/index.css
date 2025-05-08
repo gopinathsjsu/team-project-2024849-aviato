@@ -41,6 +41,9 @@ body {
 .mapboxgl-map {
   width: 100%;
   height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .restaurant-marker {
@@ -61,17 +64,16 @@ body {
   }
 }
 
-/* Map styles */
-.mapboxgl-map {
+/* Fix for restaurant details map */
+.restaurant-map-container {
+  position: relative;
   width: 100%;
-  height: 100%;
+  height: 250px;
+  min-height: 250px;
+  overflow: hidden;
 }
 
-.restaurant-marker {
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.restaurant-marker:hover {
-  transform: scale(1.2);
+/* Ensure map controls are visible */
+.mapboxgl-ctrl-top-right {
+  z-index: 10;
 }
