@@ -1,4 +1,5 @@
 package com.thalibook.config;
+
 import com.thalibook.model.Restaurant;
 import com.thalibook.model.User;
 import com.thalibook.repository.RestaurantRepository;
@@ -16,6 +17,7 @@ public class TestDataLoader implements CommandLineRunner {
     @Autowired
     private RestaurantRepository restaurantRepository;
     private UserRepository userRepository;
+
     @Override
     public void run(String... args) throws Exception {
         if (restaurantRepository.count() == 0 && userRepository.count() == 0) {
@@ -46,6 +48,8 @@ public class TestDataLoader implements CommandLineRunner {
             r.setPhotoUrl("https://example.com/restaurant.jpg");
             r.setIsApproved(true);
             r.setCreatedAt(LocalDateTime.now());
+            r.setLatitude(37.338207); // San Jose coordinates
+            r.setLongitude(-121.886330);
 
             restaurantRepository.save(r);
 

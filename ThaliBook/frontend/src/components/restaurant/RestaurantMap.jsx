@@ -10,50 +10,27 @@ export default function RestaurantMap({ restaurant }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // First effect: Get coordinates
+  // First effect: Set coordinates from restaurant data
   useEffect(() => {
-    if (!restaurant || !restaurant.address) {
-      setError("Restaurant address information is incomplete");
+    if (!restaurant) {
+      setError("Restaurant information is missing");
       setLoading(false);
       return;
     }
 
-    const getCoordinates = async () => {
-      try {
-        setLoading(true);
-        // Dynamically import mapboxgl to ensure it's only loaded in browser context
-        const mapboxgl = await import('mapbox-gl');
-        mapboxgl.default.accessToken = 'pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg';
-        
-        const address = `${restaurant.address}, ${restaurant.city}, ${restaurant.state} ${restaurant.zipCode}`;
-        console.log("Geocoding address:", address);
-        
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.default.accessToken}`
-        );
-        
-        if (!response.ok) {
-          throw new Error(`Geocoding error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.features || data.features.length === 0) {
-          throw new Error("Location not found");
-        }
-        
-        // Store coordinates
-        setCoordinates(data.features[0].center);
-        console.log("Coordinates set:", data.features[0].center);
-      } catch (error) {
-        console.error("Geocoding error:", error);
-        setError(error.message || "Error finding location");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getCoordinates();
+    if (restaurant.longitude && restaurant.latitude) {
+      // Use the coordinates directly from the restaurant data
+      setCoordinates([restaurant.longitude, restaurant.latitude]);
+      setLoading(false);
+      console.log("Using stored coordinates:", [restaurant.longitude, restaurant.latitude]);
+    } else if (restaurant.address) {
+      // Fallback to geocoding if coordinates are not available
+      setError("Coordinates not available for this restaurant");
+      setLoading(false);
+    } else {
+      setError("Restaurant location information is incomplete");
+      setLoading(false);
+    }
   }, [restaurant]);
 
   // Second effect: Initialize map once coordinates are available and DOM is ready

@@ -1,4 +1,5 @@
 package com.thalibook.dto;
+
 import lombok.Data;
 
 import java.util.Map;
@@ -17,4 +18,6 @@ public class RestaurantDetailsRequest {
     private String cuisine;
     private String costRating;
     private Map<String, String> hours;
+    private Double latitude;
+    private Double longitude;
 }

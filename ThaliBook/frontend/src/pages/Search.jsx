@@ -18,8 +18,6 @@ export default function Search() {
   const markers = useRef([]);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [visibleRestaurants, setVisibleRestaurants] = useState([]);
-  const [geocodingProgress, setGeocodingProgress] = useState(0);
-  const [geocodingTotal, setGeocodingTotal] = useState(0);
   
   const date = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const time = searchParams.get('time') || '19:00';
@@ -32,7 +30,8 @@ export default function Search() {
       date,
       time,
       partySize,
-      ...(location && { location })
+      // Only pass location to zip parameter as requested
+      ...(location && { zip: location })
     }));
   }, [dispatch, date, time, partySize, location]);
   
@@ -45,42 +44,21 @@ export default function Search() {
         const mapboxgl = await import('mapbox-gl');
         mapboxgl.default.accessToken = 'pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg';
         
-        // Create geocoded restaurant data with coordinates
+        // Create restaurant data with coordinates
         const restaurantsWithCoordinates = [];
         const bounds = new mapboxgl.default.LngLatBounds();
-        
-        // Set up for geocoding
-        setGeocodingTotal(restaurants.length);
-        setGeocodingProgress(0);
         
         // Process each restaurant to get coordinates
         for (let i = 0; i < restaurants.length; i++) {
           const restaurant = restaurants[i];
-          try {
-            // Construct the full address
-            const address = `${restaurant.address || ''}, ${restaurant.city}, ${restaurant.state} ${restaurant.zipCode || ''}`;
-            console.log(`Geocoding address: ${address}`);
-            
-            // Call Mapbox Geocoding API
-            const response = await fetch(
-              `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.default.accessToken}`
-            );
-            
-            if (!response.ok) {
-              console.error(`Geocoding error for ${restaurant.name}: ${response.status}`);
-              continue;
-            }
-            
-            const data = await response.json();
-            
-            if (!data.features || data.features.length === 0) {
-              console.error(`No location found for ${restaurant.name}`);
-              continue;
-            }
-            
-            // Get coordinates from the first result
-            const coordinates = data.features[0].center;
-            console.log(`Found coordinates for ${restaurant.name}: ${coordinates}`);
+          // console.log(restaurant.latitude, restaurant.longitude);
+          
+          
+          // Check if restaurant has latitude and longitude
+          if (restaurant.latitude && restaurant.longitude) {
+            // Use the coordinates directly from the restaurant data
+            const coordinates = [restaurant.longitude, restaurant.latitude];
+            // console.log(`Using stored coordinates for ${restaurant.name}: ${coordinates}`);
             
             // Add to bounds
             bounds.extend(coordinates);
@@ -90,11 +68,8 @@ export default function Search() {
               ...restaurant,
               coordinates: coordinates
             });
-            
-            // Update progress
-            setGeocodingProgress(i + 1);
-          } catch (error) {
-            console.error(`Error geocoding ${restaurant.name}:`, error);
+          } else {
+            console.warn(`No coordinates available for ${restaurant.name}`);
           }
         }
         
@@ -231,7 +206,7 @@ export default function Search() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Restaurant list */}
-        <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col overflow-hidden border-r border-gray-200">
+        <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col overflow-hidden border-r border-gray-200" style={{ position: 'relative', zIndex: 2, boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-bold">
               {visibleRestaurants.length} restaurant{visibleRestaurants.length !== 1 ? 's' : ''} available
@@ -242,12 +217,6 @@ export default function Search() {
             {loading ? (
               <div className="flex justify-center items-center h-full">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500"></div>
-              </div>
-            ) : geocodingProgress > 0 && geocodingProgress < geocodingTotal ? (
-              <div className="flex flex-col justify-center items-center h-full">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500 mb-4"></div>
-                <p className="text-gray-600">Geocoding restaurant addresses...</p>
-                <p className="text-sm text-gray-500 mt-2">{geocodingProgress} of {geocodingTotal}</p>
               </div>
             ) : visibleRestaurants.length === 0 ? (
               <div className="flex justify-center items-center h-full">
@@ -313,7 +282,7 @@ export default function Search() {
         </div>
         
         {/* Map */}
-        <div className="hidden md:block md:w-1/2 lg:w-3/5 relative h-full">
+        <div className="hidden md:block md:w-1/2 lg:w-3/5 relative h-full overflow-hidden">
           <div ref={mapContainer} className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }} />
           
           {!mapLoaded && (

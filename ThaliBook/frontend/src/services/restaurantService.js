@@ -3,6 +3,7 @@ import api from "./api";
 
 const restaurantService = {
   searchRestaurants: async (searchParams) => {
+    console.log("searchParams", searchParams);
     const response = await api.get("/restaurants/search", {
       params: searchParams,
     });
