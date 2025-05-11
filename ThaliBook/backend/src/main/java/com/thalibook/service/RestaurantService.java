@@ -44,8 +44,15 @@ public class RestaurantService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
     private  BookingService bookingService;
+
+    @Autowired
     private  ReviewService reviewService;
+
+    @Autowired
+    private TableSeederService tableSeederService;
 
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
@@ -90,7 +97,7 @@ public class RestaurantService {
         restaurant.setLongitude(request.getLongitude());
         restaurant.setIsApproved(false);
         restaurant.setCreatedAt(LocalDateTime.now());
-
+        restaurant.setTables(request.getTables());
         Restaurant restaurant1 = restaurantRepository.save(restaurant);
         // Fetch admin user (assuming you have at least one admin in users table)
         User admin = userRepository.findFirstByRole("ADMIN")
@@ -250,7 +257,7 @@ public class RestaurantService {
                 .orElseThrow(() -> new RuntimeException("Manager not found"));
 
         String message = "Your restaurant '" + restaurant.getName() + "' has been approved by the admin!";
-
+        tableSeederService.populateAvailabilityForRestaurant(restaurant);
         notificationService.notifyUser(manager.getUserId(), manager.getEmail(), message);
 
     }

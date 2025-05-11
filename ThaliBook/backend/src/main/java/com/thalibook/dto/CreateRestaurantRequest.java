@@ -48,4 +48,6 @@ public class CreateRestaurantRequest {
         private Double latitude;
 
         private Double longitude;
+
+        private Map<Integer, Integer> tables;
 }

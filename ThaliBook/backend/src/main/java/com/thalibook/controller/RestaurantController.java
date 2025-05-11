@@ -6,7 +6,9 @@ import com.thalibook.dto.RestaurantResponse;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.service.RestaurantService;
+import com.thalibook.service.TableSeederService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -177,4 +179,15 @@ public class RestaurantController {
         List<Restaurant> managerRestaurants = restaurantRepository.findByManagerId(userId);
         return ResponseEntity.ok(managerRestaurants);
     }
+
+
+    @Autowired
+    private TableSeederService tableSeederService;
+
+    @PostMapping("/seed-tables")
+    public String seed() {
+        tableSeederService.populateTablesAvailability();
+        return "TablesAvailability populated!";
+    }
+
 }

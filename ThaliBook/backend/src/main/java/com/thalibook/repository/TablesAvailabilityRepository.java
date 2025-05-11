@@ -12,4 +12,6 @@ public interface TablesAvailabilityRepository extends JpaRepository<TablesAvaila
 
     List<TablesAvailability> findByRestaurantIdAndSizeGreaterThanEqual(Long restaurantId, int size);
 
+    void deleteByRestaurantId(Long restaurantId);
+
 }

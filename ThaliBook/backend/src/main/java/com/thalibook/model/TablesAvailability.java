@@ -20,7 +20,8 @@ public class TablesAvailability {
     @Column(nullable = false)
     private Integer size;
 
-    @Column(name = "booking_times", columnDefinition = "json", nullable = false)
-    private String bookingTimes; // store as JSON string like '["12:00", "12:30"]'
+    @Column(name = "booking_times", nullable = false)
+    private String bookingTimes; // now treated as plain text (stores JSON array as a string)
+
 }
 

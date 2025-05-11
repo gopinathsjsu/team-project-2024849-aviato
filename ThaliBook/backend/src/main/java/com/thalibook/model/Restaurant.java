@@ -1,5 +1,6 @@
 package com.thalibook.model;
 
+import com.thalibook.converter.IntegerMapToJsonConverter;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -7,9 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 @Entity
 @Table(name = "restaurants")
@@ -76,4 +75,7 @@ public class Restaurant {
 
     @Column(name = "longitude")
     private Double longitude;
+
+    @Convert(converter = IntegerMapToJsonConverter.class)
+    private Map<Integer, Integer> tables;
 }
