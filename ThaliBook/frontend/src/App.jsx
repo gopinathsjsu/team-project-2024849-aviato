@@ -35,21 +35,21 @@ function App() {
             <Route path="/restaurant/:id" element={<RestaurantDetails />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
+
             {/* Private Routes (for any logged in user) */}
             <Route element={<PrivateRoute />}>
               <Route path="/booking/:id" element={<Booking />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/dashboard" element={<Dashboard />} />
             </Route>
-            
+
             {/* Restaurant Manager Routes */}
             <Route element={<RoleBasedRoute role="RESTAURANT_MANAGER" />}>
               <Route path="/manager/dashboard" element={<ManagerDashboard />} />
-              <Route path="/manager/restaurant" element={<RestaurantEdit />} />
+              <Route path="/manager/restaurant/edit/:id" element={<RestaurantEdit />} /> 
               <Route path="/manager/bookings" element={<BookingManagement />} />
             </Route>
-            
+
             {/* Admin Routes */}
             <Route element={<RoleBasedRoute role="ADMIN" />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
