@@ -25,9 +25,12 @@ public class Booking {
     private LocalTime time;
 
     private Integer partySize;
-    private String status;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "status")
+    private String status;  // values: CONFIRMED, PENDING, CANCELLED
+
 }
 

@@ -31,7 +31,9 @@ public class BookingController {
             String token = authHeader.substring(7);
             String userEmail = JwtUtil.getSubject(token);
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Long userId = (Long) auth.getDetails();
+            Map<String, Object> details = (Map<String, Object>) auth.getDetails();
+
+            Long userId = (Long) details.get("userId");
             // Here you should resolve userId from email using UserRepository
 
             Booking booking = bookingService.createBooking(userId, request);
@@ -59,6 +61,25 @@ public class BookingController {
         }
 
         return ResponseEntity.ok(bookings);
+    }
+
+    @PatchMapping("/{id}/confirm")
+    public ResponseEntity<String> confirmBooking(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> details = (Map<String, Object>) auth.getDetails();
+        Long userId = (Long) details.get("userId");
+        String role = (String) details.get("role");
+
+        if (!role.equals("ADMIN") && !bookingService.isManagerOfBooking(userId, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not authorized to confirm this booking.");
+        }
+
+        boolean success = bookingService.confirmBooking(id);
+        if (success) {
+            return ResponseEntity.ok("Booking confirmed successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found or already confirmed.");
+        }
     }
 
     @DeleteMapping("/{bookingId}")

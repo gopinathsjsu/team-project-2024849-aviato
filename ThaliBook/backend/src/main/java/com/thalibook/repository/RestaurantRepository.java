@@ -21,4 +21,11 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("state") String state,
             @Param("zip") String zip
     );
+
+    List<Restaurant> findByIsApprovedFalse();
+
+    long countByIsApproved(boolean isApproved);
+
+    //  NEW: Used to list restaurants owned by the logged-in manager
+    List<Restaurant> findByManagerId(Long managerId);
 }

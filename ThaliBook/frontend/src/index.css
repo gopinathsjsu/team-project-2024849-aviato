@@ -1,0 +1,102 @@
+/* src/index.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  --primary: #ff6b00;
+  --primary-foreground: #ffffff;
+  --primary-hover: #e25a00;
+  --secondary: #f9f9f9;
+  --secondary-foreground: #333333;
+  --accent: #ff8c38;
+  --accent-foreground: #ffffff;
+  --border: #e5e5e5;
+  --background: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #333333;
+  --muted: #f5f5f5;
+  --muted-foreground: #71717a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --ring: rgba(255, 107, 0, 0.3);
+
+  /* Other design tokens */
+  --header-height: 64px;
+  --radius: 0.5rem;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", sans-serif;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--card-foreground);
+  background-color: var(--background);
+}
+
+/* Map styles */
+.mapboxgl-map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.restaurant-marker {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.restaurant-marker:hover {
+  transform: scale(1.2);
+}
+
+/* Fix for map container in search page */
+@media (min-width: 768px) {
+  .search-map-container {
+    position: sticky;
+    top: 0;
+    height: calc(100vh - var(--header-height));
+  }
+}
+
+/* Fix for restaurant details map */
+.restaurant-map-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  min-height: 250px;
+  overflow: hidden;
+}
+
+/* Ensure map controls are visible */
+.mapboxgl-ctrl-top-right {
+  z-index: 10;
+}
+
+/* Dropdown menu improvements */
+.dropdown-container {
+  position: relative;
+}
+
+.dropdown-container > div {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.3s ease;
+}
+
+.dropdown-container:hover > div {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+/* Ensure the dropdown stays visible when hovering over it */
+.dropdown-container > div:hover {
+  visibility: visible;
+  opacity: 1;
+}

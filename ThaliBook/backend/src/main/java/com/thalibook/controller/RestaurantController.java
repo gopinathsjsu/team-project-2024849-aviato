@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import com.thalibook.model.TablesAvailability;
 import com.thalibook.repository.TablesAvailabilityRepository;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -58,6 +60,34 @@ public class RestaurantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> approveRestaurant(@PathVariable Long id) {
+        restaurantService.approveRestaurant(id);
+        return ResponseEntity.ok("Restaurant approved!");
+    }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Restaurant>> getPendingRestaurants() {
+        List<Restaurant> pending = restaurantService.getPendingRestaurants();
+        return ResponseEntity.ok(pending);
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT_MANAGER')")
+    public ResponseEntity<Restaurant> updateRestaurant(
+            @PathVariable Long id,
+            @RequestBody Restaurant updatedDetails) {
+
+        Restaurant updated = null;
+        try {
+            updated = restaurantService.updateRestaurant(id, updatedDetails);
+        } catch (AccessDeniedException e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok(updated);
+    }
 
     @GetMapping("/search")
     public ResponseEntity<List<Restaurant>> searchRestaurants(
@@ -120,5 +150,31 @@ public class RestaurantController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteRestaurant(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> userDetails = (Map<String, Object>) auth.getDetails();
+        String role = (String) userDetails.get("role");
+        Long userId = ((Number) userDetails.get("userId")).longValue();
+
+        if (!role.equals("ADMIN") && !restaurantService.isManagerOfRestaurant(userId, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not authorized to delete this restaurant.");
+        }
+
+        restaurantService.deleteRestaurant(id);
+        return ResponseEntity.ok("Restaurant deleted successfully.");
+    }
+
+    @GetMapping("/manager")
+    @PreAuthorize("hasRole('RESTAURANT_MANAGER')")
+    public ResponseEntity<List<Restaurant>> getRestaurantsForManager() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> details = (Map<String, Object>) auth.getDetails();
+        Long userId = ((Number) details.get("userId")).longValue();
+
+        List<Restaurant> managerRestaurants = restaurantRepository.findByManagerId(userId);
+        return ResponseEntity.ok(managerRestaurants);
     }
 }
