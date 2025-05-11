@@ -22,7 +22,7 @@ public class NotificationService {
         notificationRepository.save(notification);
 
         // Send email
-//        emailService.sendEmail(email, "Notification from ThaliBook", message);
+        emailService.sendEmail(email, "Notification from ThaliBook", message);
     }
 }
 

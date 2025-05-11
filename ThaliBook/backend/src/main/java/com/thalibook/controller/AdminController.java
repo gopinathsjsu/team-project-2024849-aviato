@@ -6,13 +6,16 @@ import com.thalibook.repository.BookingRepository;
 import com.thalibook.repository.RestaurantRepository;
 import com.thalibook.repository.UserRepository;
 import com.thalibook.service.AdminService;
+import com.thalibook.service.EmailService;
 import com.thalibook.service.RestaurantService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -28,6 +31,9 @@ public class AdminController {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final RestaurantService restaurantService;
+
+    @Autowired
+    private EmailService emailService;
 
     public AdminController(RestaurantRepository restaurantRepository,
                            BookingRepository bookingRepository,
@@ -82,5 +88,18 @@ public class AdminController {
     }
 
 
+    @GetMapping("/send-email")
+    public ResponseEntity<String> testSendEmail(
+            @RequestParam String to,
+            @RequestParam String subject,
+            @RequestParam String body) {
+        try {
+            emailService.sendEmail(to, subject, body);
+            return ResponseEntity.ok("✅ Email sent to " + to);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("❌ Failed to send email: " + e.getMessage());
+        }
+    }
 }
 

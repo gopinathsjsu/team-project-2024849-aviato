@@ -180,14 +180,4 @@ public class RestaurantController {
         return ResponseEntity.ok(managerRestaurants);
     }
 
-
-    @Autowired
-    private TableSeederService tableSeederService;
-
-    @PostMapping("/seed-tables")
-    public String seed() {
-        tableSeederService.populateTablesAvailability();
-        return "TablesAvailability populated!";
-    }
-
 }
