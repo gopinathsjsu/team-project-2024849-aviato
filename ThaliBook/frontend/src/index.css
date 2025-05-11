@@ -77,3 +77,26 @@ body {
 .mapboxgl-ctrl-top-right {
   z-index: 10;
 }
+
+/* Dropdown menu improvements */
+.dropdown-container {
+  position: relative;
+}
+
+.dropdown-container > div {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.3s ease;
+}
+
+.dropdown-container:hover > div {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+/* Ensure the dropdown stays visible when hovering over it */
+.dropdown-container > div:hover {
+  visibility: visible;
+  opacity: 1;
+}

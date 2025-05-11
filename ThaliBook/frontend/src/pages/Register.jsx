@@ -1,5 +1,4 @@
 // src/pages/Register.jsx
-import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '@/store/thunks/authThunks';
@@ -16,8 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const registerSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-  phone: z.string().regex(/^\d{3}-\d{4}$/, { 
-    message: 'Phone number must be in format: 123-4567' 
+  phone: z.string().regex(/^\d{3}[\s-]?\d{3}[\s-]?\d{4}$/, {
+    message: 'Phone number must be in format: 123 456 7890'
   }),
   role: z.string().refine(val => ['CUSTOMER', 'RESTAURANT_MANAGER'].includes(val), {
     message: 'Please select a valid role'
@@ -99,7 +98,7 @@ export default function Register() {
             <Input
               id="phone"
               type="text"
-              placeholder="123-4567"
+              placeholder="123 456 7890"
               {...register('phone')}
               className={errors.phone ? 'border-red-500' : 'mt-2'}
             />

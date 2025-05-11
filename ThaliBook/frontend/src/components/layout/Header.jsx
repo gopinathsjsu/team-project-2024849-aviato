@@ -8,6 +8,7 @@ import { Menu, X, User, LogOut, Settings, Bell } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated } = useSelector(state => state.auth);
   const [notifications, setNotifications] = useState([]);
   const { isAuthenticated, user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
@@ -59,28 +60,32 @@ export default function Header() {
                 <Link to="/dashboard" className="text-gray-700 hover:text-orange-600 font-medium">
                   My Reservations
                 </Link>
+              <div className="relative group dropdown-container">
                 <div className="relative group">
                   <button className="flex items-center text-gray-700 hover:text-orange-600 font-medium">
                     <User className="h-5 w-5 mr-2" />
                     Account
                   </button>
-                  
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block">
-                    <Link 
-                      to="/profile" 
-                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                    >
-                      <Settings className="h-5 w-5 mr-3" />
-                      Profile
-                    </Link>
-                    
-                    <button 
-                      onClick={handleLogout}
-                      className="flex items-center w-full text-left px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                    >
-                      <LogOut className="h-5 w-5 mr-3" />
-                      Sign Out
-                    </button>
+                  {/* Dropdown menu container */}
+                  <div className="absolute right-0 w-48 pt-2">
+                    {/* Dropdown content */}
+                    <div className="bg-white rounded-md shadow-lg py-1 z-50">
+                      <Link
+                        to="/profile"
+                        className="flex items-center px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                      >
+                        <Settings className="h-5 w-5 mr-3" />
+                        Profile
+                      </Link>
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full text-left px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                      >
+                        <LogOut className="h-5 w-5 mr-3" />
+                        Sign Out
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="relative group">
