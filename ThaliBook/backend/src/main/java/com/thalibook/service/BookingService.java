@@ -47,6 +47,10 @@ public class BookingService {
     public Booking createBooking(Long userId, BookingRequest request) throws Exception {
         List<TablesAvailability> tables = tablesAvailabilityRepository.findByRestaurantId(request.getRestaurantId());
 
+        // Fetch restaurant object once
+        Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
+                .orElseThrow(() -> new Exception("Restaurant not found"));
+
         for (TablesAvailability table : tables) {
             if (table.getSize() >= request.getPartySize()) {
                 ObjectMapper mapper = new ObjectMapper();
@@ -70,27 +74,33 @@ public class BookingService {
                     booking.setDate(request.getDate());
                     booking.setTime(request.getTime());
                     booking.setPartySize(request.getPartySize());
-                    booking.setStatus("PENDING");
+                    booking.setStatus("CONFIRMED");
                     booking.setCreatedAt(LocalDateTime.now());
 
-                    Booking book = bookingRepository.save(booking);
-                    // fetch restaurant manager email & userId
-                    Restaurant restaurant = restaurantRepository.findById(booking.getRestaurantId()).orElseThrow();
-                    User manager = userRepository.findById(restaurant.getManagerId()).orElseThrow();
+                    Booking savedBooking = bookingRepository.save(booking);
 
-                    String message = "A new booking has been placed at " + restaurant.getName() +
-                            " on " + booking.getDate() + " at " + booking.getTime() + ".";
+                    // Notify restaurant manager
+                    User manager = userRepository.findById(restaurant.getManagerId()).orElse(null);
+                    if (manager != null) {
+                        String subject = "New Booking Confirmed at " + restaurant.getName();
+                        String body = "A new table has been booked on " + booking.getDate() + " at " + booking.getTime() +
+                                " for party size " + booking.getPartySize() + ".";
+//                        emailService.sendEmail(manager.getEmail(), subject, body);
 
-                    notificationService.notifyUser(manager.getUserId(), manager.getEmail(), message);
-                    return book;
+                        notificationService.notifyUser(
+                                manager.getUserId(), manager.getEmail(),
+                                "New booking at " + restaurant.getName() + " on " + booking.getDate() + " at " + booking.getTime()
+                        );
+                    }
 
+                    return savedBooking; // ✅ return successful booking
                 }
             }
         }
 
-
-        throw new Exception("No available table for the given time and party size.");
+        throw new Exception("No available table found for the requested time and size.");
     }
+
 
     public List<Booking> getBookingsByUserId(Long userId) {
         return bookingRepository.findByUserId(userId);
@@ -109,7 +119,7 @@ public class BookingService {
         return bookingRepository.existsByBookingIdAndRestaurantManagerId(bookingId, managerId);
     }
 
-
+    @Deprecated
     public boolean confirmBooking(Long bookingId) {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isPresent()) {
