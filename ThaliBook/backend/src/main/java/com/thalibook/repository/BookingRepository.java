@@ -52,6 +52,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "WHERE b.bookingId = :bookingId AND r.managerId = :managerId")
     boolean existsByBookingIdAndRestaurantManagerId(@Param("bookingId") Long bookingId, @Param("managerId") Long managerId);
 
+    boolean existsByTableIdAndDateAndTime(Long tableId, LocalDate date, LocalTime time);
 
 
 }

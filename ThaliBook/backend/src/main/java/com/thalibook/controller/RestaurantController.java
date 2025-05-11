@@ -165,16 +165,17 @@ public class RestaurantController {
         restaurantService.deleteRestaurant(id);
         return ResponseEntity.ok("Restaurant deleted successfully.");
     }
-    @GetMapping("/manager")
-@PreAuthorize("hasRole('RESTAURANT_MANAGER')")
-public ResponseEntity<List<Restaurant>> getRestaurantsForManager() {
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    Map<String, Object> details = (Map<String, Object>) auth.getDetails();
-    Long userId = ((Number) details.get("userId")).longValue();
 
-    List<Restaurant> managerRestaurants = restaurantRepository.findByManagerId(userId);
-    return ResponseEntity.ok(managerRestaurants);
-}
+    @GetMapping("/manager")
+    @PreAuthorize("hasRole('RESTAURANT_MANAGER')")
+    public ResponseEntity<List<Restaurant>> getRestaurantsForManager() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Map<String, Object> details = (Map<String, Object>) auth.getDetails();
+        Long userId = ((Number) details.get("userId")).longValue();
+
+        List<Restaurant> managerRestaurants = restaurantRepository.findByManagerId(userId);
+        return ResponseEntity.ok(managerRestaurants);
+    }
 
 
 }

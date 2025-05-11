@@ -9,4 +9,7 @@ public interface TablesAvailabilityRepository extends JpaRepository<TablesAvaila
 
     // Get all tables for a specific restaurant
     List<TablesAvailability> findByRestaurantId(Long restaurantId);
+
+    List<TablesAvailability> findByRestaurantIdAndSizeGreaterThanEqual(Long restaurantId, int size);
+
 }
