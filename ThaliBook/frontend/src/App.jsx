@@ -1,5 +1,5 @@
 // src/App.jsx
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -23,9 +23,12 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 
 function App() {
+  const location = useLocation();
+  const hideHeader = location.pathname.startsWith('/manager');
+
   return (
     <div className="flex flex-col min-h-svh">
-      <Header />
+      {!hideHeader && <Header />}
       <main className="flex-1">
         <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
           <Routes>
@@ -46,7 +49,7 @@ function App() {
             {/* Restaurant Manager Routes */}
             <Route element={<RoleBasedRoute role="RESTAURANT_MANAGER" />}>
               <Route path="/manager/dashboard" element={<ManagerDashboard />} />
-              <Route path="/manager/restaurant/edit/:id" element={<RestaurantEdit />} /> 
+              <Route path="/manager/restaurant/edit/:id" element={<RestaurantEdit />} />
               <Route path="/manager/bookings" element={<BookingManagement />} />
             </Route>
 
