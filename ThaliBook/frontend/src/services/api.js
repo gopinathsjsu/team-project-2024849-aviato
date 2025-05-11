@@ -14,8 +14,14 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
+    // console.log("API Interceptor Tokkkkkkkkkkkkkkkkkkkkken:");
+
+    // console.log("API Interceptor - Token from localStorage:", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      // console.log("Authorization header set:", `Bearer ${token}`);
+    } else {
+      // console.log("No token found in localStorage");
     }
     return config;
   },

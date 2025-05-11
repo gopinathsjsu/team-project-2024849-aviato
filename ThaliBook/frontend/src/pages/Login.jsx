@@ -1,5 +1,4 @@
 // src/pages/Login.jsx
-import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '@/store/thunks/authThunks';
@@ -35,7 +34,10 @@ export default function Login() {
   
   const onSubmit = async (data) => {
     const result = await dispatch(loginUser(data));
+    console.log("Login result:", result);
     if (result.meta.requestStatus === 'fulfilled') {
+      console.log("Login successful, token:", result.payload.token);
+      console.log("Token in localStorage after login:", localStorage.getItem("token"));
       navigate(returnUrl);
     }
   };
