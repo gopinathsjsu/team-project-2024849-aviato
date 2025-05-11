@@ -34,6 +34,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/manager/**").hasAuthority("RESTAURANT_MANAGER")
                         .requestMatchers("/api/users/**").hasAuthority("CUSTOMER")
+                        .requestMatchers("/api/notifications/**").hasAnyAuthority("CUSTOMER", "RESTAURANT_MANAGER", "ADMIN")
+                        .requestMatchers("/api/restaurants/**").hasAnyAuthority("CUSTOMER", "RESTAURANT_MANAGER", "ADMIN")
+                        .requestMatchers("/api/bookings/**").hasAnyAuthority("CUSTOMER", "RESTAURANT_MANAGER", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

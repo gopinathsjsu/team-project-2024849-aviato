@@ -1,15 +1,18 @@
 package com.thalibook.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
 import com.thalibook.dto.RestaurantDetailsRequest;
 import com.thalibook.exception.ResourceNotFoundException;
 import com.thalibook.model.Booking;
 import com.thalibook.model.Restaurant;
+import com.thalibook.model.TablesAvailability;
 import com.thalibook.model.User;
 import com.thalibook.repository.BookingRepository;
 import com.thalibook.repository.RestaurantRepository;
+import com.thalibook.repository.TablesAvailabilityRepository;
 import com.thalibook.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -22,6 +25,9 @@ import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,16 +39,21 @@ public class RestaurantService {
     private BookingRepository bookingRepository;
 
     @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     private NotificationService notificationService;
 
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
+    private final TablesAvailabilityRepository tablesAvailabilityRepository;
 
 
 
-    public RestaurantService(RestaurantRepository restaurantRepository, UserRepository userRepository) {
+    public RestaurantService(RestaurantRepository restaurantRepository, UserRepository userRepository, TablesAvailabilityRepository tablesAvailabilityRepository) {
         this.restaurantRepository = restaurantRepository;
         this.userRepository = userRepository;
+        this.tablesAvailabilityRepository = tablesAvailabilityRepository;
     }
 
     public Restaurant createRestaurant(CreateRestaurantRequest request, Long managerId) {
@@ -85,10 +96,51 @@ public class RestaurantService {
     }
 
     public List<Restaurant> searchRestaurants(LocalDate date, LocalTime time, int partySize,
-            String city, String state, String zip) {
+                                              String city, String state, String zip) {
         List<Restaurant> restaurants = restaurantRepository.searchByLocation(city, state, zip);
-        // ⏳ In the next step we'll add logic here to filter by table availability
-        return restaurants;
+        List<Restaurant> availableRestaurants = new ArrayList<>();
+
+        for (Restaurant restaurant : restaurants) {
+            List<TablesAvailability> tables = tablesAvailabilityRepository
+                    .findByRestaurantIdAndSizeGreaterThanEqual(restaurant.getRestaurantId(), partySize);
+
+            for (TablesAvailability table : tables) {
+                // Extract available booking slots for the day
+                ArrayList<String> allBookingTimes = null;
+                try {
+                    allBookingTimes = objectMapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+                // Check time within available slot ±30 min
+                if (isTimeAvailable(time, allBookingTimes)) {
+                    // Check if the table is already booked
+                    boolean isBooked = bookingRepository.existsByTableIdAndDateAndTime(
+                            table.getTableId(), date, time);
+
+                    if (!isBooked) {
+                        availableRestaurants.add(restaurant);
+                        break; // We only need one available table to include the restaurant
+                    }
+                }
+            }
+        }
+
+        return availableRestaurants;
+    }
+
+    private boolean isTimeAvailable(LocalTime requested, List<String> availableSlots) {
+        for (String slot : availableSlots) {
+            try {
+                LocalTime slotTime = LocalTime.parse(slot);
+                if (Math.abs(ChronoUnit.MINUTES.between(slotTime, requested)) <= 30) {
+                    return true;
+                }
+            } catch (DateTimeParseException e) {
+                // skip invalid format
+            }
+        }
+        return false;
     }
 
     public boolean isTableAvailable(Long tableId, LocalDate date, LocalTime time, List<String> availableSlots) {

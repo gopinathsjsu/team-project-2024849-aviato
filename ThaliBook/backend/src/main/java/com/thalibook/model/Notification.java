@@ -5,19 +5,21 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "notifications")
+@Data
 public class Notification {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // who will receive this notification
+    private Long userId; // recipient
     private String message;
     private boolean read = false;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
-
-
 }
+
 

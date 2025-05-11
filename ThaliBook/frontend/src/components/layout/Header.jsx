@@ -1,17 +1,39 @@
 // src/components/layout/Header.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '@/store/thunks/authThunks';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Bell } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated } = useSelector(state => state.auth);
+  const [notifications, setNotifications] = useState([]);
+  const { isAuthenticated, user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await fetch('/api/notifications', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          const data = await response.json();
+          setNotifications(data);
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        }
+      }
+    };
+
+    fetchNotifications();
+  }, [isAuthenticated]);
+
   const handleLogout = () => {
     dispatch(logoutUser());
     navigate('/');
@@ -38,13 +60,12 @@ export default function Header() {
                 <Link to="/dashboard" className="text-gray-700 hover:text-orange-600 font-medium">
                   My Reservations
                 </Link>
-                
-                <div className="relative group dropdown-container">
+              <div className="relative group dropdown-container">
+                <div className="relative group">
                   <button className="flex items-center text-gray-700 hover:text-orange-600 font-medium">
                     <User className="h-5 w-5 mr-2" />
                     Account
                   </button>
-                  
                   {/* Dropdown menu container */}
                   <div className="absolute right-0 w-48 pt-2">
                     {/* Dropdown content */}
@@ -67,6 +88,26 @@ export default function Header() {
                     </div>
                   </div>
                 </div>
+                <div className="relative group">
+                  <Link to="" className="text-gray-700 hover:text-orange-600 font-medium">
+                    <Bell className="h-5 w-5 mr-2" />
+                  </Link>
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 hidden group-hover:block">
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications?.map((notification, index) => (
+                        <div key={index} className="px-4 py-2 hover:bg-orange-50 border-b border-gray-100">
+                          <p className="text-sm text-gray-700">{notification.message}</p>
+                          <span className="text-xs text-gray-500">{notification.timestamp}</span>
+                        </div>
+                      ))}
+                      {!notifications?.length && (
+                        <div className="px-4 py-2 text-sm text-gray-500">
+                          No new notifications
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>              
               </>
             ) : (
               <div className="flex items-center space-x-4">
