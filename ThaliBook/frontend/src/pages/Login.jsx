@@ -1,5 +1,4 @@
 // src/pages/Login.jsx
-import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '@/store/thunks/authThunks';
@@ -35,8 +34,33 @@ export default function Login() {
   
   const onSubmit = async (data) => {
     const result = await dispatch(loginUser(data));
+    console.log("Login result:", result);
     if (result.meta.requestStatus === 'fulfilled') {
-      navigate(returnUrl);
+      console.log("Login successful, token:", result.payload.token);
+      console.log("User role:", result.payload.user?.role);
+      
+      // Redirect based on user role
+      if (result.payload.user) {
+        const { role } = result.payload.user;
+        
+        switch (role) {
+          case 'CUSTOMER':
+            navigate('/search');
+            break;
+          case 'RESTAURANT_MANAGER':
+            navigate('/manager/dashboard');
+            break;
+          case 'ADMIN':
+            navigate('/admin/dashboard');
+            break;
+          default:
+            // If role is not recognized or returnUrl is specified, use default behavior
+            navigate(returnUrl);
+        }
+      } else {
+        // Fallback if user info is not available
+        navigate(returnUrl);
+      }
     }
   };
   
