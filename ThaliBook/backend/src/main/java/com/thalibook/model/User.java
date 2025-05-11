@@ -3,7 +3,10 @@ package com.thalibook.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.thalibook.model.Review;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "users")
@@ -30,6 +33,9 @@ public class User {
 
     @Column(length = 15)
     private String phone;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

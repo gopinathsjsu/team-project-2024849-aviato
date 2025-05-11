@@ -8,6 +8,8 @@ import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "restaurants")
@@ -56,6 +58,12 @@ public class Restaurant {
 
     @Column(name = "photo_url", length = 255)
     private String photoUrl;
+
+    @Column(name = "average_rating")
+    private Double averageRating;
+
+    @Column(name = "total_reviews")
+    private Integer totalReviews;
 
     @Column(name = "is_approved")
     private Boolean isApproved;

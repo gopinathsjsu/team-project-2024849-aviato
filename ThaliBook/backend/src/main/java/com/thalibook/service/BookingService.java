@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.time.LocalDate;
 
 @Service
 public class BookingService {
@@ -149,6 +150,17 @@ public class BookingService {
         bookingRepository.save(booking);
     }
 
+    public Integer getBookingsCountForToday(Long restaurantId) {
+        LocalDate today = LocalDate.now();
+        return bookingRepository.countByRestaurantIdAndDate(restaurantId, today);
+    }
+
+    // Alternative: Count only confirmed bookings for today
+    public Integer getConfirmedBookingsCountForToday(Long restaurantId) {
+        LocalDate today = LocalDate.now();
+        return bookingRepository.countByRestaurantIdAndDateAndStatus(
+                restaurantId, today, "CONFIRMED");
+    }
 
 }
 

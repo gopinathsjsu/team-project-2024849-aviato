@@ -4,8 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
-import com.thalibook.dto.RestaurantDetailsRequest;
 import com.thalibook.exception.ResourceNotFoundException;
+import com.thalibook.dto.RestaurantResponse;
+import com.thalibook.dto.RestaurantDetailResponse;
 import com.thalibook.model.Booking;
 import com.thalibook.model.Restaurant;
 import com.thalibook.model.TablesAvailability;
@@ -43,6 +44,8 @@ public class RestaurantService {
 
     @Autowired
     private NotificationService notificationService;
+    private  BookingService bookingService;
+    private  ReviewService reviewService;
 
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
@@ -50,10 +53,14 @@ public class RestaurantService {
 
 
 
-    public RestaurantService(RestaurantRepository restaurantRepository, UserRepository userRepository, TablesAvailabilityRepository tablesAvailabilityRepository) {
+    public RestaurantService(RestaurantRepository restaurantRepository, UserRepository userRepository, TablesAvailabilityRepository tablesAvailabilityRepository,
+                             BookingService bookingService,
+                             ReviewService reviewService ) {
         this.restaurantRepository = restaurantRepository;
         this.userRepository = userRepository;
         this.tablesAvailabilityRepository = tablesAvailabilityRepository;
+        this.bookingService       = bookingService;
+        this.reviewService        = reviewService;
     }
 
     public Restaurant createRestaurant(CreateRestaurantRequest request, Long managerId) {
@@ -169,28 +176,69 @@ public class RestaurantService {
         return bookings.isEmpty();
     }
 
-    public RestaurantDetailsRequest getRestaurantDetails(Long restaurantId) {
-        Restaurant obj = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new RuntimeException("Restaurant not found with id: " + restaurantId));
+    public RestaurantResponse getRestaurantDetails(Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
 
-        RestaurantDetailsRequest details = new RestaurantDetailsRequest();
-        details.setRestaurantId(obj.getRestaurantId());
-        details.setManagerId(obj.getManagerId());
-        details.setName(obj.getName());
-        details.setAddress(obj.getAddress());
-        details.setCity(obj.getCity());
-        details.setState(obj.getState());
-        details.setZipCode(obj.getZipCode());
-        details.setPhone(obj.getPhone());
-        details.setDescription(obj.getDescription());
-        details.setCuisine(obj.getCuisine());
-        details.setCostRating(obj.getCostRating());
-        details.setHours(obj.getHours());
-        details.setLatitude(obj.getLatitude());
-        details.setLongitude(obj.getLongitude());
+        RestaurantDetailResponse response = convertToDetailResponse(restaurant);
+        response.setBookingsToday(bookingService.getBookingsCountForToday(restaurantId));
 
-        return details;
+        // Optionally include recent reviews
+        // List<ReviewResponse> recentReviews = reviewService.getRecentReviewsForRestaurant(restaurantId, 5);
+       //  response.setRecentReviews(recentReviews);
+
+        return response;
     }
+
+
+    public RestaurantResponse getRestaurantSummary(Long restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
+
+        RestaurantResponse response = convertToBasicResponse(restaurant);
+        response.setBookingsToday(bookingService.getBookingsCountForToday(restaurantId));
+
+        return response;
+    }
+
+    private RestaurantResponse convertToBasicResponse(Restaurant restaurant) {
+        RestaurantResponse response = new RestaurantResponse();
+        response.setRestaurantId(restaurant.getRestaurantId());
+        response.setName(restaurant.getName());
+        response.setAddress(restaurant.getAddress());
+        response.setCity(restaurant.getCity());
+        response.setCuisine(restaurant.getCuisine());
+        response.setCostRating(restaurant.getCostRating());
+        response.setAverageRating(restaurant.getAverageRating());
+        response.setTotalReviews(restaurant.getTotalReviews());
+        response.setPhotoUrl(restaurant.getPhotoUrl());
+        return response;
+    }
+
+    private RestaurantDetailResponse convertToDetailResponse(Restaurant restaurant) {
+        RestaurantDetailResponse response = new RestaurantDetailResponse();
+
+        response.setRestaurantId(restaurant.getRestaurantId());
+        response.setName(restaurant.getName());
+        response.setAddress(restaurant.getAddress());
+        response.setCity(restaurant.getCity());
+        response.setCuisine(restaurant.getCuisine());
+        response.setCostRating(restaurant.getCostRating());
+        response.setAverageRating(restaurant.getAverageRating());
+        response.setTotalReviews(restaurant.getTotalReviews());
+        response.setPhotoUrl(restaurant.getPhotoUrl());
+
+        response.setDescription(restaurant.getDescription());
+        response.setState(restaurant.getState());
+        response.setZipCode(restaurant.getZipCode());
+        response.setPhone(restaurant.getPhone());
+        response.setHours(restaurant.getHours());
+        response.setIsApproved(restaurant.getIsApproved());
+        return response;
+    }
+
+
+
 
     @Transactional
     public void approveRestaurant(Long id) {
