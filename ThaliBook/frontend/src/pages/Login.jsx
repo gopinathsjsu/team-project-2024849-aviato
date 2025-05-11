@@ -37,8 +37,30 @@ export default function Login() {
     console.log("Login result:", result);
     if (result.meta.requestStatus === 'fulfilled') {
       console.log("Login successful, token:", result.payload.token);
-      console.log("Token in localStorage after login:", localStorage.getItem("token"));
-      navigate(returnUrl);
+      console.log("User role:", result.payload.user?.role);
+      
+      // Redirect based on user role
+      if (result.payload.user) {
+        const { role } = result.payload.user;
+        
+        switch (role) {
+          case 'CUSTOMER':
+            navigate('/search');
+            break;
+          case 'RESTAURANT_MANAGER':
+            navigate('/manager/dashboard');
+            break;
+          case 'ADMIN':
+            navigate('/admin/dashboard');
+            break;
+          default:
+            // If role is not recognized or returnUrl is specified, use default behavior
+            navigate(returnUrl);
+        }
+      } else {
+        // Fallback if user info is not available
+        navigate(returnUrl);
+      }
     }
   };
   
