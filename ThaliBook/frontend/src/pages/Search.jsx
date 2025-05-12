@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Users, Star, Plus, Minus, Maximize } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { meta } from '@eslint/js';
 
 export default function Search() {
   const [searchParams] = useSearchParams();
@@ -48,7 +49,7 @@ export default function Search() {
     const initializeMap = async () => {
       try {
         const mapboxgl = await import('mapbox-gl');
-        mapboxgl.default.accessToken = 'pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg';
+        mapboxgl.default.accessToken = meta.env.VITE_MAPBOX_TOKEN;
         
         // Create restaurant data with coordinates
         const restaurantsWithCoordinates = [];
