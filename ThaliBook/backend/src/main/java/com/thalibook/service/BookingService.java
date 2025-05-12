@@ -174,5 +174,9 @@ public class BookingService {
                 restaurantId, today, "CONFIRMED");
     }
 
+    public List<Booking> findByRestaurantIdAndDate(Long restaurantId, LocalDate date) {
+        return bookingRepository.findByRestaurantIdAndDate(restaurantId, date);
+    }
+
 }
 

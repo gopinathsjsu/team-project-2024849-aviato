@@ -166,27 +166,11 @@ public class RestaurantService {
 
             for (TablesAvailability table : tables) {
                 List<String> availableSlots = objectMapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
-
-                // Filter out slots that have a conflict
-                List<String> filteredSlots = availableSlots.stream()
-                        .filter(slot -> {
-                            LocalTime slotTime = LocalTime.parse(slot);
-                            return !bookingRepository.existsByTableIdAndDateAndTimeAndStatusIn(
-                                    table.getTableId(),
-                                    date,
-                                    slotTime,
-                                    List.of("CONFIRMED", "PENDING")
-                            );
-                        })
-                        .toList();
-
-                if (!filteredSlots.isEmpty()) {
-                    availableTables.add(new TableAvailabilityResponse(
-                            table.getTableId(),
-                            table.getSize(),
-                            filteredSlots
-                    ));
-                }
+                availableTables.add(new TableAvailabilityResponse(
+                        table.getTableId(),
+                        table.getSize(),
+                        availableSlots
+                ));
             }
 
             if (!availableTables.isEmpty()) {
@@ -199,37 +183,6 @@ public class RestaurantService {
         return availableRestaurants;
     }
 
-
-    private List<TableAvailabilityResponse> getAvailableTables(Long restaurantId) {
-        List<TablesAvailability> tables = tablesAvailabilityRepository.findByRestaurantId(restaurantId);
-        List<TableAvailabilityResponse> result = new ArrayList<>();
-        ObjectMapper mapper = new ObjectMapper();
-
-        for (TablesAvailability table : tables) {
-            try {
-                List<String> allTimes = mapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
-                // Optionally: check current date and filter out past times
-                result.add(new TableAvailabilityResponse(table.getTableId(), table.getSize(), allTimes));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return result;
-    }
-
-    private boolean isTimeAvailable(LocalTime requested, List<String> availableSlots) {
-        for (String slot : availableSlots) {
-            try {
-                LocalTime slotTime = LocalTime.parse(slot);
-                if (Math.abs(ChronoUnit.MINUTES.between(slotTime, requested)) <= 30) {
-                    return true;
-                }
-            } catch (DateTimeParseException e) {
-                // skip invalid format
-            }
-        }
-        return false;
-    }
 
     public boolean isTableAvailable(Long tableId, LocalDate date, LocalTime time, List<String> availableSlots) {
         // check if this time is available ±30 minutes
@@ -408,8 +361,6 @@ public class RestaurantService {
             for (TablesAvailability table : tables) {
                 List<String> availableSlots = objectMapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
 
-                // Optional: filter out slots that are already booked
-                // OR just return all slots as "available" for management view
                 availableTables.add(new TableAvailabilityResponse(
                         table.getTableId(),
                         table.getSize(),
