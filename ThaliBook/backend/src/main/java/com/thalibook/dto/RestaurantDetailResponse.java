@@ -10,6 +10,8 @@ public class RestaurantDetailResponse extends RestaurantResponse {
     private String state;
     private String zipCode;
     private String phone;
+    private Double latitude;
+    private Double longitude;
     private Map<String, String> hours;
     private Boolean isApproved;
     private List<ReviewResponse> recentReviews; // Optional: last 5-10 reviews

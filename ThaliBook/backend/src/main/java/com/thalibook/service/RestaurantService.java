@@ -229,6 +229,8 @@ public class RestaurantService {
         response.setName(restaurant.getName());
         response.setAddress(restaurant.getAddress());
         response.setCity(restaurant.getCity());
+        response.setLongitude(restaurant.getLongitude());
+        response.setLatitude(restaurant.getLatitude());
         response.setCuisine(restaurant.getCuisine());
         response.setCostRating(restaurant.getCostRating());
         response.setAverageRating(restaurant.getAverageRating());
