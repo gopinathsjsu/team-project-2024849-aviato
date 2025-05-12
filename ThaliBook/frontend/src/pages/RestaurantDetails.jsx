@@ -1,11 +1,11 @@
 // src/pages/RestaurantDetails.jsx
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRestaurantDetails } from '@/store/thunks/restaurantThunks';
 import { MapPin, Star, DollarSign, Clock, Calendar, Users, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import RestaurantMap from '@/components/restaurant/RestaurantMap';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -163,7 +163,7 @@ export default function RestaurantDetails() {
             <div className="space-y-4 mb-6">
               <div className="flex items-center">
                 <Calendar className="h-5 w-5 mr-3 text-gray-500" />
-                <span>{format(new Date(date), 'EEEE, MMMM d, yyyy')}</span>
+                <span>{format(parseISO(date), 'EEEE, MMMM d, yyyy')}</span>
               </div>
               
               <div className="flex items-center">

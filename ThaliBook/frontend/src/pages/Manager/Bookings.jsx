@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '@/services/api';
 import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 import ManagerSidebar from '@/components/layout/ManagerSidebar';
 import {
   CheckCircle,
@@ -241,7 +242,7 @@ function BookingsList({ bookings, getRestaurantName }) {
   // Sort bookings by date (newest first) and then by time
   const sortedBookings = [...bookings].sort((a, b) => {
     if (a.date !== b.date) {
-      return new Date(b.date) - new Date(a.date); // Sort by date descending
+      return parseISO(b.date).getTime() - parseISO(a.date).getTime(); // Sort by date descending
     }
     return a.time.localeCompare(b.time); // Then sort by time ascending
   });
@@ -318,8 +319,7 @@ function BookingsList({ bookings, getRestaurantName }) {
 
 // Helper functions
 function formatDate(dateString) {
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+  return format(parseISO(dateString), 'EEEE, MMMM d, yyyy');
 }
 
 function formatTime(timeString) {
