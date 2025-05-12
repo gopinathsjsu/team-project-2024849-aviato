@@ -143,7 +143,7 @@ public class RestaurantService {
             int zipCode = Integer.parseInt(zip);
             candidates = restaurantRepository.findApprovedByZipRange(zipCode - 5, zipCode + 5);
         } else {
-            return List.of(); // No location filter — return empty or all?
+            candidates = restaurantRepository.findAllApproved();
         }
 
         List<Restaurant> availableRestaurants = new ArrayList<>();

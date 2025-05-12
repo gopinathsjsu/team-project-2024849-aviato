@@ -37,7 +37,7 @@ export default function Search() {
       time,
       partySize,
       // Only pass location to zip parameter as requested
-      ...(location && { zip: location })
+      ...(location && !isNaN(location) ? { zip: location } : { city: location })
     }));
   }, [dispatch, date, time, partySize, location]);
   

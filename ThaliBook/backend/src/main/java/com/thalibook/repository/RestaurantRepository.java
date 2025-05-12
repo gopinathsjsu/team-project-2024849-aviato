@@ -36,4 +36,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     //  NEW: Used to list restaurants owned by the logged-in manager
     List<Restaurant> findByManagerId(Long managerId);
+
+    @Query("SELECT r FROM Restaurant r WHERE r.isApproved = true")
+    List<Restaurant> findAllApproved();
 }
