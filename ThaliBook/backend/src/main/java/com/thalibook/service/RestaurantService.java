@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
+import com.thalibook.dto.TableAvailabilityResponse;
 import com.thalibook.exception.ResourceNotFoundException;
 import com.thalibook.dto.RestaurantResponse;
 import com.thalibook.dto.RestaurantDetailResponse;
@@ -105,16 +106,18 @@ public class RestaurantService {
         restaurant.setCreatedAt(LocalDateTime.now());
         restaurant.setTables(request.getTables());
 
-        String fullAddress = restaurant.getAddress() + ", " + restaurant.getCity() + ", " + restaurant.getState()
-                + " " + restaurant.getZipCode();
-        try {
-            double[] coords = geoCodingService.getLatLong(fullAddress, restaurant.getZipCode());
-            restaurant.setLatitude(coords[0]);
-            restaurant.setLongitude(coords[1]);
-        } catch (IOException e) {
-            System.out.println("❌ Failed to get coordinates for address: " +fullAddress);
-            restaurant.setLatitude(null);
-            restaurant.setLongitude(null);
+        if (request.getLatitude()==null || request.getLongitude() ==null){
+            String fullAddress = restaurant.getAddress() + ", " + restaurant.getCity() + ", " + restaurant.getState()
+                    + " " + restaurant.getZipCode();
+            try {
+                double[] coords = geoCodingService.getLatLong(fullAddress, restaurant.getZipCode());
+                restaurant.setLatitude(coords[0]);
+                restaurant.setLongitude(coords[1]);
+            } catch (IOException e) {
+                System.out.println("❌ Failed to get coordinates for address: " +fullAddress);
+                restaurant.setLatitude(null);
+                restaurant.setLongitude(null);
+            }
         }
 
 
@@ -130,13 +133,11 @@ public class RestaurantService {
     }
 
     public List<RestaurantDetailResponse> searchRestaurants(LocalDate date, LocalTime time, int partySize,
-                                              String city, String zip) throws JsonProcessingException {
+                                                            String city, String zip) throws JsonProcessingException {
 
-        // 1. Get day key like "Mon"
         String dayKey = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
-
-        // 2. Fetch candidate restaurants
         List<Restaurant> candidates;
+
         if (city != null && !city.isEmpty()) {
             candidates = restaurantRepository.findApprovedByCity(city);
         } else if (zip != null && !zip.isEmpty()) {
@@ -147,7 +148,7 @@ public class RestaurantService {
         }
 
         List<RestaurantDetailResponse> availableRestaurants = new ArrayList<>();
-        List<TablesAvailability> availabilitySlots = new ArrayList<>();
+
         for (Restaurant r : candidates) {
             Map<String, String> hours = r.getHours();
             if (hours == null || !hours.containsKey(dayKey)) continue;
@@ -161,28 +162,60 @@ public class RestaurantService {
             List<TablesAvailability> tables = tablesAvailabilityRepository
                     .findByRestaurantIdAndSizeGreaterThanEqual(r.getRestaurantId(), partySize);
 
+            List<TableAvailabilityResponse> availableTables = new ArrayList<>();
+
             for (TablesAvailability table : tables) {
                 List<String> availableSlots = objectMapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
-                if (!availableSlots.contains(time.toString())) continue;
 
-                boolean conflict = bookingRepository.existsByTableIdAndDateAndTimeAndStatusIn(
-                        table.getTableId(), date, time, List.of("CONFIRMED", "PENDING")
-                );
+                // Filter out slots that have a conflict
+                List<String> filteredSlots = availableSlots.stream()
+                        .filter(slot -> {
+                            LocalTime slotTime = LocalTime.parse(slot);
+                            return !bookingRepository.existsByTableIdAndDateAndTimeAndStatusIn(
+                                    table.getTableId(),
+                                    date,
+                                    slotTime,
+                                    List.of("CONFIRMED", "PENDING")
+                            );
+                        })
+                        .toList();
 
-                if (!conflict) {
-                    availabilitySlots.add(table);
-                    break;
+                if (!filteredSlots.isEmpty()) {
+                    availableTables.add(new TableAvailabilityResponse(
+                            table.getTableId(),
+                            table.getSize(),
+                            filteredSlots
+                    ));
                 }
             }
-            if(!availabilitySlots.isEmpty()){
-                RestaurantDetailResponse detailedR = convertToDetailResponse(r);
-                detailedR.setAvailabilitySlots(availabilitySlots);
-                availableRestaurants.add(detailedR);
+
+            if (!availableTables.isEmpty()) {
+                RestaurantDetailResponse detailResponse = convertToDetailResponse(r);
+                detailResponse.setTableAvailability(availableTables);
+                availableRestaurants.add(detailResponse);
             }
         }
+
         return availableRestaurants;
     }
 
+
+    private List<TableAvailabilityResponse> getAvailableTables(Long restaurantId) {
+        List<TablesAvailability> tables = tablesAvailabilityRepository.findByRestaurantId(restaurantId);
+        List<TableAvailabilityResponse> result = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+
+        for (TablesAvailability table : tables) {
+            try {
+                List<String> allTimes = mapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
+                // Optionally: check current date and filter out past times
+                result.add(new TableAvailabilityResponse(table.getTableId(), table.getSize(), allTimes));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
 
     private boolean isTimeAvailable(LocalTime requested, List<String> availableSlots) {
         for (String slot : availableSlots) {
@@ -362,4 +395,32 @@ public class RestaurantService {
         return restaurantRepository.findAll();
     }
 
+    public List<RestaurantDetailResponse> getRestaurantsByManager(Long managerId) throws JsonProcessingException {
+        List<Restaurant> restaurants = restaurantRepository.findByManagerId(managerId);
+        List<RestaurantDetailResponse> responses = new ArrayList<>();
+
+        for (Restaurant r : restaurants) {
+            RestaurantDetailResponse detail = convertToDetailResponse(r);
+
+            List<TablesAvailability> tables = tablesAvailabilityRepository.findByRestaurantId(r.getRestaurantId());
+            List<TableAvailabilityResponse> availableTables = new ArrayList<>();
+
+            for (TablesAvailability table : tables) {
+                List<String> availableSlots = objectMapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
+
+                // Optional: filter out slots that are already booked
+                // OR just return all slots as "available" for management view
+                availableTables.add(new TableAvailabilityResponse(
+                        table.getTableId(),
+                        table.getSize(),
+                        availableSlots
+                ));
+            }
+
+            detail.setTableAvailability(availableTables);
+            responses.add(detail);
+        }
+
+        return responses;
+    }
 }

@@ -17,5 +17,5 @@ public class RestaurantDetailResponse extends RestaurantResponse {
     private Boolean isApproved;
     private List<ReviewResponse> recentReviews; // Optional: last 5-10 reviews
     private Map<Integer, Integer> tables;
-    private List<TablesAvailability> availabilitySlots;
+    private List<TableAvailabilityResponse> tableAvailability;
 }

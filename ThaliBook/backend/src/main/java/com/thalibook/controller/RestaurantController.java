@@ -1,5 +1,6 @@
 package com.thalibook.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
 import com.thalibook.dto.RestaurantDetailResponse;
@@ -36,13 +37,14 @@ import java.util.Optional;
 @RequestMapping("/api/restaurants")
 public class RestaurantController {
 
-    private final RestaurantService restaurantService;
+    @Autowired
+    private RestaurantService restaurantService;
+
     private final RestaurantRepository restaurantRepository;
     private final TablesAvailabilityRepository tablesAvailabilityRepository;
     private final ObjectMapper objectMapper;
 
-    public RestaurantController(RestaurantService restaurantService, RestaurantRepository restaurantRepository, TablesAvailabilityRepository tablesAvailabilityRepository, ObjectMapper objectMapper) {
-        this.restaurantService = restaurantService;
+    public RestaurantController(RestaurantRepository restaurantRepository, TablesAvailabilityRepository tablesAvailabilityRepository, ObjectMapper objectMapper) {
         this.restaurantRepository = restaurantRepository;
         this.tablesAvailabilityRepository = tablesAvailabilityRepository;
         this.objectMapper = objectMapper;
@@ -176,12 +178,12 @@ public class RestaurantController {
 
     @GetMapping("/manager")
     @PreAuthorize("hasRole('RESTAURANT_MANAGER')")
-    public ResponseEntity<List<Restaurant>> getRestaurantsForManager() {
+    public ResponseEntity<List<RestaurantDetailResponse>> getRestaurantsForManager() throws JsonProcessingException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Map<String, Object> details = (Map<String, Object>) auth.getDetails();
         Long userId = ((Number) details.get("userId")).longValue();
 
-        List<Restaurant> managerRestaurants = restaurantRepository.findByManagerId(userId);
+        List<RestaurantDetailResponse> managerRestaurants = restaurantService.getRestaurantsByManager(userId);
         return ResponseEntity.ok(managerRestaurants);
     }
 
