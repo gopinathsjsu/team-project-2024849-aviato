@@ -13,4 +13,5 @@ public class RestaurantDetailResponse extends RestaurantResponse {
     private Map<String, String> hours;
     private Boolean isApproved;
     private List<ReviewResponse> recentReviews; // Optional: last 5-10 reviews
+    private Map<Integer, Integer> tables;
 }

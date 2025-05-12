@@ -234,7 +234,7 @@ public class RestaurantService {
         response.setAverageRating(restaurant.getAverageRating());
         response.setTotalReviews(restaurant.getTotalReviews());
         response.setPhotoUrl(restaurant.getPhotoUrl());
-
+        response.setTables(restaurant.getTables());
         response.setDescription(restaurant.getDescription());
         response.setState(restaurant.getState());
         response.setZipCode(restaurant.getZipCode());

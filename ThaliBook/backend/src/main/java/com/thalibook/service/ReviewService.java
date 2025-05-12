@@ -24,7 +24,6 @@ public class ReviewService {
   private final RestaurantRepository restaurantRepository;
   private final UserRepository userRepository;
 
-  @Autowired
   public ReviewService(ReviewRepository reviewRepository,
                        RestaurantRepository restaurantRepository,
                        UserRepository userRepository) {
