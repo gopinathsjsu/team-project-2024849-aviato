@@ -72,4 +72,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                   @Param("date") LocalDate date,
                                   @Param("status") String status);
 
+    boolean existsByTableIdAndDateAndTimeAndStatusIn(Long tableId, LocalDate date, LocalTime time, List<String> statuses);
 }

@@ -25,6 +25,11 @@ export default function SearchForm() {
     }));
   };
 
+  const times = Array.from({length: 28}, (_, i) => {
+    const hour = Math.floor((20 + i) / 2);
+    const minute = i % 2 === 0 ? '00' : '30';
+    return `${hour.toString().padStart(2, '0')}:${minute}`;
+  });  
   // Function to get user's location using Mapbox
   const getUserLocation = () => {
     setIsGettingLocation(true);
@@ -178,7 +183,7 @@ export default function SearchForm() {
                   <SelectValue>{searchParams.time}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className={"bg-white"}>
-                  {['11:30', '12:00', '12:30', '13:00', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'].map(time => (
+                  {times.map(time => (
                     <SelectItem key={time} value={time}>
                       {time}
                     </SelectItem>
@@ -203,7 +208,7 @@ export default function SearchForm() {
                   <SelectValue>{searchParams.partySize}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className={"bg-white"}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20].map(size => (
+                  {[1, 2, 3, 4, 5, 6].map(size => (
                     <SelectItem key={size} value={size.toString()}>
                       {size} {size === 1 ? 'person' : 'people'}
                     </SelectItem>

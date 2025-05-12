@@ -22,14 +22,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -53,6 +56,9 @@ public class RestaurantService {
 
     @Autowired
     private TableSeederService tableSeederService;
+
+    @Autowired
+    private GeoCodingService geoCodingService;
 
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
@@ -98,6 +104,20 @@ public class RestaurantService {
         restaurant.setIsApproved(false);
         restaurant.setCreatedAt(LocalDateTime.now());
         restaurant.setTables(request.getTables());
+
+        String fullAddress = restaurant.getAddress() + ", " + restaurant.getCity() + ", " + restaurant.getState()
+                + " " + restaurant.getZipCode();
+        try {
+            double[] coords = geoCodingService.getLatLong(fullAddress, restaurant.getZipCode());
+            restaurant.setLatitude(coords[0]);
+            restaurant.setLongitude(coords[1]);
+        } catch (IOException e) {
+            System.out.println("❌ Failed to get coordinates for address: " +fullAddress);
+            restaurant.setLatitude(null);
+            restaurant.setLongitude(null);
+        }
+
+
         Restaurant restaurant1 = restaurantRepository.save(restaurant);
         // Fetch admin user (assuming you have at least one admin in users table)
         User admin = userRepository.findFirstByRole("ADMIN")
@@ -110,38 +130,55 @@ public class RestaurantService {
     }
 
     public List<Restaurant> searchRestaurants(LocalDate date, LocalTime time, int partySize,
-                                              String city, String state, String zip) {
-        List<Restaurant> restaurants = restaurantRepository.searchByLocation(city, state, zip);
+                                              String city, String zip) throws JsonProcessingException {
+
+        // 1. Get day key like "Mon"
+        String dayKey = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+
+        // 2. Fetch candidate restaurants
+        List<Restaurant> candidates;
+        if (city != null && !city.isEmpty()) {
+            candidates = restaurantRepository.findApprovedByCity(city);
+        } else if (zip != null && !zip.isEmpty()) {
+            int zipCode = Integer.parseInt(zip);
+            candidates = restaurantRepository.findApprovedByZipRange(zipCode - 5, zipCode + 5);
+        } else {
+            candidates = restaurantRepository.findAllApproved();
+        }
+
         List<Restaurant> availableRestaurants = new ArrayList<>();
 
-        for (Restaurant restaurant : restaurants) {
+        for (Restaurant r : candidates) {
+            Map<String, String> hours = r.getHours();
+            if (hours == null || !hours.containsKey(dayKey)) continue;
+
+            String[] openClose = hours.get(dayKey).split("-");
+            LocalTime open = LocalTime.parse(openClose[0]);
+            LocalTime close = LocalTime.parse(openClose[1]);
+
+            if (time.isBefore(open) || time.isAfter(close)) continue;
+
             List<TablesAvailability> tables = tablesAvailabilityRepository
-                    .findByRestaurantIdAndSizeGreaterThanEqual(restaurant.getRestaurantId(), partySize);
+                    .findByRestaurantIdAndSizeGreaterThanEqual(r.getRestaurantId(), partySize);
 
             for (TablesAvailability table : tables) {
-                // Extract available booking slots for the day
-                ArrayList<String> allBookingTimes = null;
-                try {
-                    allBookingTimes = objectMapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
-                }
-                // Check time within available slot ±30 min
-                if (isTimeAvailable(time, allBookingTimes)) {
-                    // Check if the table is already booked
-                    boolean isBooked = bookingRepository.existsByTableIdAndDateAndTime(
-                            table.getTableId(), date, time);
+                List<String> availableSlots = objectMapper.readValue(table.getBookingTimes(), new TypeReference<>() {});
+                if (!availableSlots.contains(time.toString())) continue;
 
-                    if (!isBooked) {
-                        availableRestaurants.add(restaurant);
-                        break; // We only need one available table to include the restaurant
-                    }
+                boolean conflict = bookingRepository.existsByTableIdAndDateAndTimeAndStatusIn(
+                        table.getTableId(), date, time, List.of("CONFIRMED", "PENDING")
+                );
+
+                if (!conflict) {
+                    availableRestaurants.add(r);
+                    break;
                 }
             }
         }
 
         return availableRestaurants;
     }
+
 
     private boolean isTimeAvailable(LocalTime requested, List<String> availableSlots) {
         for (String slot : availableSlots) {
