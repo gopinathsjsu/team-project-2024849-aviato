@@ -2,6 +2,7 @@ package com.thalibook.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thalibook.dto.CreateRestaurantRequest;
+import com.thalibook.dto.RestaurantDetailResponse;
 import com.thalibook.dto.RestaurantResponse;
 import com.thalibook.model.Restaurant;
 import com.thalibook.repository.RestaurantRepository;
@@ -92,7 +93,7 @@ public class RestaurantController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Restaurant>> searchRestaurants(
+    public ResponseEntity<List<RestaurantDetailResponse> > searchRestaurants(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
             @RequestParam int partySize,
@@ -100,7 +101,7 @@ public class RestaurantController {
             @RequestParam(required = false) String zip
     ) {
         try {
-            List<Restaurant> results = restaurantService.searchRestaurants(date, time, partySize, city, zip);
+            List<RestaurantDetailResponse> results = restaurantService.searchRestaurants(date, time, partySize, city, zip);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             e.printStackTrace();

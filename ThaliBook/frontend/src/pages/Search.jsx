@@ -42,9 +42,9 @@ export default function Search() {
   }, [dispatch, date, time, partySize, location]);
   
   // Initialize map when restaurants are loaded
-  useEffect(() => {    
-    if (loading || !restaurants.length || !mapContainer.current || mapLoaded) return;
+  useEffect(() => {
     console.log('before Initializing map', restaurants);
+    if (loading || !restaurants.length || !mapContainer.current || mapLoaded) return;
     const initializeMap = async () => {
       try {
         const mapboxgl = await import('mapbox-gl');

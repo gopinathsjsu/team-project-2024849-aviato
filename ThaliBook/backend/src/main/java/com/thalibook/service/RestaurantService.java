@@ -129,7 +129,7 @@ public class RestaurantService {
         return restaurant1;
     }
 
-    public List<Restaurant> searchRestaurants(LocalDate date, LocalTime time, int partySize,
+    public List<RestaurantDetailResponse> searchRestaurants(LocalDate date, LocalTime time, int partySize,
                                               String city, String zip) throws JsonProcessingException {
 
         // 1. Get day key like "Mon"
@@ -146,8 +146,8 @@ public class RestaurantService {
             candidates = restaurantRepository.findAllApproved();
         }
 
-        List<Restaurant> availableRestaurants = new ArrayList<>();
-
+        List<RestaurantDetailResponse> availableRestaurants = new ArrayList<>();
+        List<TablesAvailability> availabilitySlots = new ArrayList<>();
         for (Restaurant r : candidates) {
             Map<String, String> hours = r.getHours();
             if (hours == null || !hours.containsKey(dayKey)) continue;
@@ -170,12 +170,16 @@ public class RestaurantService {
                 );
 
                 if (!conflict) {
-                    availableRestaurants.add(r);
+                    availabilitySlots.add(table);
                     break;
                 }
             }
+            if(!availabilitySlots.isEmpty()){
+                RestaurantDetailResponse detailedR = convertToDetailResponse(r);
+                detailedR.setAvailabilitySlots(availabilitySlots);
+                availableRestaurants.add(detailedR);
+            }
         }
-
         return availableRestaurants;
     }
 
@@ -280,6 +284,7 @@ public class RestaurantService {
         response.setPhone(restaurant.getPhone());
         response.setHours(restaurant.getHours());
         response.setIsApproved(restaurant.getIsApproved());
+
         return response;
     }
 

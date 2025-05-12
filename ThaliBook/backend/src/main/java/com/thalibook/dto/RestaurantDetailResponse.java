@@ -1,5 +1,6 @@
 package com.thalibook.dto;
 
+import com.thalibook.model.TablesAvailability;
 import lombok.Data;
 import java.util.Map;
 import java.util.List;
@@ -16,4 +17,5 @@ public class RestaurantDetailResponse extends RestaurantResponse {
     private Boolean isApproved;
     private List<ReviewResponse> recentReviews; // Optional: last 5-10 reviews
     private Map<Integer, Integer> tables;
+    private List<TablesAvailability> availabilitySlots;
 }
