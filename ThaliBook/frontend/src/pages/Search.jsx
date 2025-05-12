@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { searchRestaurants } from '@/store/thunks/restaurantThunks';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Users, Star, Plus, Minus, Maximize } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function Search() {
@@ -42,7 +42,7 @@ export default function Search() {
   }, [dispatch, date, time, partySize, location]);
   
   // Initialize map when restaurants are loaded
-  useEffect(() => {
+  useEffect(() => {    
     if (loading || !restaurants.length || !mapContainer.current || mapLoaded) return;
     console.log('before Initializing map', restaurants);
     const initializeMap = async () => {
@@ -187,7 +187,7 @@ export default function Search() {
           <div className="hidden md:flex items-center space-x-4">
             <div className="bg-white text-gray-800 py-2 px-3 rounded-md flex items-center">
               <Calendar className="h-5 w-5 mr-2 text-gray-500" />
-              <span>{format(new Date(date), 'MMMM d, yyyy')}</span>
+              <span>{format(parseISO(date), 'MMMM d, yyyy')}</span>
             </div>
             
             <div className="bg-white text-gray-800 py-2 px-3 rounded-md flex items-center">

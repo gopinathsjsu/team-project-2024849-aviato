@@ -24,6 +24,7 @@ const Approvals = lazy(() => import('./pages/Admin/Approvals'));
 const Analytics = lazy(() => import('./pages/Admin/Analytics'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 
 function App() {
   const location = useLocation();
@@ -47,6 +48,7 @@ function App() {
               <Route path="/booking/:id" element={<Booking />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/notifications" element={<Notifications />} />
             </Route>
 
             {/* Restaurant Manager Routes */}

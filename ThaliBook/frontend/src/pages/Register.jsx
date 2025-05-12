@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const registerSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
+  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
   phone: z.string().regex(/^\d{3}[\s-]?\d{3}[\s-]?\d{4}$/, {
     message: 'Phone number must be in format: 123 456 7890'
@@ -35,6 +36,7 @@ export default function Register() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: '',
+      name: '',
       password: '',
       phone: '',
       role: 'CUSTOMER'
@@ -76,6 +78,20 @@ export default function Register() {
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Your full name"
+              {...register('name')}
+              className={errors.name ? 'border-red-500' : 'mt-2'}
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
             )}
           </div>
           

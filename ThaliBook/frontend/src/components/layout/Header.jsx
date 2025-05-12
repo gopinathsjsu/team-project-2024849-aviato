@@ -1,16 +1,34 @@
 // src/components/layout/Header.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '@/store/thunks/authThunks';
+import { fetchNotifications } from '@/store/thunks/notificationThunks';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Bell } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated } = useSelector(state => state.auth);
+  const { notifications } = useSelector(state => state.notification);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  
+  // Fetch notifications when user is authenticated and periodically refresh
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Fetch notifications immediately
+      dispatch(fetchNotifications());
+      
+      // Set up interval to fetch notifications every minute
+      const intervalId = setInterval(() => {
+        dispatch(fetchNotifications());
+      }, 60000); // 60 seconds
+      
+      // Clean up interval on unmount
+      return () => clearInterval(intervalId);
+    }
+  }, [dispatch, isAuthenticated]);
   
   const handleLogout = () => {
     dispatch(logoutUser());
@@ -67,6 +85,18 @@ export default function Header() {
                     </div>
                   </div>
                 </div>
+                <div className="relative">
+                  <Link to="/notifications" className="text-gray-700 hover:text-orange-600">
+                    <div className="relative">
+                      <Bell className="h-5 w-5" />
+                      {notifications.length > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {notifications.length > 9 ? '9+' : notifications.length}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                </div>
               </>
             ) : (
               <div className="flex items-center space-x-4">
@@ -118,8 +148,36 @@ export default function Header() {
                   
                   <hr className="my-2" />
                   
-                  <Link 
-                    to="/profile" 
+                  <Link
+                    to="/notifications"
+                    className="flex items-center py-2 text-gray-700 hover:text-orange-600 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Bell className="h-5 w-5 mr-2" />
+                    Notifications
+                    {notifications.length > 0 && (
+                      <span className="ml-2 bg-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {notifications.length > 9 ? '9+' : notifications.length}
+                      </span>
+                    )}
+                  </Link>
+                  
+                  <Link
+                    to="/notifications"
+                    className="flex items-center py-2 text-gray-700 hover:text-orange-600 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Bell className="h-5 w-5 mr-2" />
+                    Notifications
+                    {notifications.length > 0 && (
+                      <span className="ml-2 bg-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {notifications.length > 9 ? '9+' : notifications.length}
+                      </span>
+                    )}
+                  </Link>
+                  
+                  <Link
+                    to="/profile"
                     className="block py-2 text-gray-700 hover:text-orange-600 font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >

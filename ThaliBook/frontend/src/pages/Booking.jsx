@@ -4,7 +4,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRestaurantDetails } from '@/store/thunks/restaurantThunks';
 import { createBooking } from '@/store/thunks/bookingThunks';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { CalendarIcon, Clock, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,7 +75,7 @@ export default function Booking() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center">
                 <CalendarIcon className="h-5 w-5 mr-3 text-gray-500" />
-                <span>{format(new Date(date), 'EEEE, MMMM d, yyyy')}</span>
+                <span>{format(parseISO(date), 'EEEE, MMMM d, yyyy')}</span>
               </div>
               
               <div className="flex items-center">
@@ -132,7 +132,7 @@ export default function Booking() {
                   
                   <div className="flex items-center">
                     <CalendarIcon className="h-5 w-5 mr-3 text-gray-500" />
-                    <span>{format(new Date(date), 'EEEE, MMMM d, yyyy')}</span>
+                    <span>{format(parseISO(date), 'EEEE, MMMM d, yyyy')}</span>
                   </div>
                   
                   <div className="flex items-center">
