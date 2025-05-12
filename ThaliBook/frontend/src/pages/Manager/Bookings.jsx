@@ -1,19 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '@/services/api';
 import { toast } from 'sonner';
 import ManagerSidebar from '@/components/layout/ManagerSidebar';
 import {
-  Users,
-  Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent
-} from '@/components/ui/card';
 import {
   Tabs,
   TabsContent,
@@ -21,37 +16,38 @@ import {
   TabsTrigger
 } from '@/components/ui/tabs';
 
-export default function BookingManagement() {
-  const { restaurantId } = useParams();
+export default function Bookings() {
   // We don't need location anymore since we're using the ManagerSidebar component
-  const [restaurant, setRestaurant] = useState(null);
   const [bookings, setBookings] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
-  }, [restaurantId]);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch restaurant details
-      const restaurantResponse = await api.get(`/restaurants/details/${restaurantId}`);
-      setRestaurant(restaurantResponse.data);
-
       // Fetch bookings
       const bookingsResponse = await api.get('/bookings/my');
-      // Filter bookings for this restaurant
-      const filteredBookings = bookingsResponse.data.filter(
-        booking => booking.restaurantId === parseInt(restaurantId)
-      );
-      setBookings(filteredBookings);
+      setBookings(bookingsResponse.data);
+
+      // Fetch restaurants
+      const restaurantsResponse = await api.get('/restaurants/manager');
+      setRestaurants(restaurantsResponse.data);
     } catch (err) {
       console.error("Failed to fetch data:", err);
-      toast.error("Failed to load data");
+      toast.error("Failed to load bookings");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get restaurant name by ID
+  const getRestaurantName = (restaurantId) => {
+    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    return restaurant ? restaurant.name : 'Unknown Restaurant';
   };
 
   // Filter bookings by status
@@ -62,6 +58,20 @@ export default function BookingManagement() {
   const confirmedBookings = getBookingsByStatus('CONFIRMED');
   const pendingBookings = getBookingsByStatus('PENDING');
   const cancelledBookings = getBookingsByStatus('CANCELLED');
+
+  // Group bookings by restaurant
+  const groupBookingsByRestaurant = () => {
+    const grouped = {};
+    bookings.forEach(booking => {
+      if (!grouped[booking.restaurantId]) {
+        grouped[booking.restaurantId] = [];
+      }
+      grouped[booking.restaurantId].push(booking);
+    });
+    return grouped;
+  };
+
+  const bookingsByRestaurant = groupBookingsByRestaurant();
 
   if (loading) {
     return (
@@ -74,25 +84,6 @@ export default function BookingManagement() {
     );
   }
 
-  if (!restaurant) {
-    return (
-      <div className="flex min-h-screen bg-gray-50">
-        <ManagerSidebar />
-        <div className="flex-1 flex justify-center items-center">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-800">Restaurant not found</h2>
-            <p className="text-gray-600 mt-2">The restaurant you're looking for doesn't exist or you don't have access to it.</p>
-            <Link to="/manager/restaurants" className="mt-4 inline-block">
-              <Button className="bg-orange-600 hover:bg-orange-700">
-                Back to Restaurants
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       <ManagerSidebar />
@@ -100,34 +91,47 @@ export default function BookingManagement() {
       {/* Main Content */}
       <div className="flex-1 p-8">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">{restaurant.name} - Reservations</h1>
-            <p className="text-gray-600">{restaurant.address}, {restaurant.city}</p>
-          </div>
-          <Link to={`/manager/restaurant/edit/${restaurantId}`}>
-            <Button variant="outline">
-              Edit Restaurant
-            </Button>
-          </Link>
+          <h1 className="text-2xl font-bold">All Bookings</h1>
         </div>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard
-            title="Today's Bookings"
-            value={bookings.filter(b => b.date === new Date().toISOString().split('T')[0]).length}
-            icon={<Clock className="h-6 w-6 text-orange-600" />}
-          />
-          <StatCard
-            title="Confirmed Bookings"
-            value={confirmedBookings.length}
-            icon={<CheckCircle className="h-6 w-6 text-green-600" />}
-          />
-          <StatCard
-            title="Pending Bookings"
-            value={pendingBookings.length}
-            icon={<Clock className="h-6 w-6 text-yellow-600" />}
-          />
+        {/* Booking Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 flex items-center">
+            <div className="p-2 rounded-full bg-gray-100 mr-3">
+              <Clock className="h-5 w-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Total Bookings</p>
+              <p className="text-xl font-bold">{bookings.length}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4 flex items-center">
+            <div className="p-2 rounded-full bg-green-100 mr-3">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Confirmed</p>
+              <p className="text-xl font-bold">{confirmedBookings.length}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4 flex items-center">
+            <div className="p-2 rounded-full bg-yellow-100 mr-3">
+              <Clock className="h-5 w-5 text-yellow-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Pending</p>
+              <p className="text-xl font-bold">{pendingBookings.length}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4 flex items-center">
+            <div className="p-2 rounded-full bg-red-100 mr-3">
+              <XCircle className="h-5 w-5 text-red-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Cancelled</p>
+              <p className="text-xl font-bold">{cancelledBookings.length}</p>
+            </div>
+          </div>
         </div>
 
         {/* Bookings Section */}
@@ -145,10 +149,10 @@ export default function BookingManagement() {
             <TabsContent value="all" className="p-6">
               {bookings.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">No bookings found for this restaurant.</p>
+                  <p className="text-gray-600">No bookings found.</p>
                 </div>
               ) : (
-                <BookingsList bookings={bookings} />
+                <BookingsList bookings={bookings} getRestaurantName={getRestaurantName} />
               )}
             </TabsContent>
 
@@ -158,7 +162,7 @@ export default function BookingManagement() {
                   <p className="text-gray-600">No confirmed bookings found.</p>
                 </div>
               ) : (
-                <BookingsList bookings={confirmedBookings} />
+                <BookingsList bookings={confirmedBookings} getRestaurantName={getRestaurantName} />
               )}
             </TabsContent>
 
@@ -168,7 +172,7 @@ export default function BookingManagement() {
                   <p className="text-gray-600">No pending bookings found.</p>
                 </div>
               ) : (
-                <BookingsList bookings={pendingBookings} />
+                <BookingsList bookings={pendingBookings} getRestaurantName={getRestaurantName} />
               )}
             </TabsContent>
 
@@ -178,17 +182,62 @@ export default function BookingManagement() {
                   <p className="text-gray-600">No cancelled bookings found.</p>
                 </div>
               ) : (
-                <BookingsList bookings={cancelledBookings} />
+                <BookingsList bookings={cancelledBookings} getRestaurantName={getRestaurantName} />
               )}
             </TabsContent>
           </Tabs>
+        </div>
+
+        {/* Bookings by Restaurant */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Bookings by Restaurant</h2>
+          {Object.keys(bookingsByRestaurant).length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+              <p className="text-gray-600">No bookings found.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(bookingsByRestaurant).map(([restaurantId, restaurantBookings]) => (
+                <div key={restaurantId} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                    <h3 className="font-semibold">{getRestaurantName(parseInt(restaurantId))}</h3>
+                    <Link to={`/manager/reservations/${restaurantId}`}>
+                      <Button variant="outline" size="sm">
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gray-50 rounded p-4 text-center">
+                        <p className="text-sm text-gray-500">Total Bookings</p>
+                        <p className="text-xl font-bold">{restaurantBookings.length}</p>
+                      </div>
+                      <div className="bg-green-50 rounded p-4 text-center">
+                        <p className="text-sm text-gray-500">Today's Bookings</p>
+                        <p className="text-xl font-bold">
+                          {restaurantBookings.filter(b => b.date === new Date().toISOString().split('T')[0]).length}
+                        </p>
+                      </div>
+                      <div className="bg-yellow-50 rounded p-4 text-center">
+                        <p className="text-sm text-gray-500">Pending Bookings</p>
+                        <p className="text-xl font-bold">
+                          {restaurantBookings.filter(b => b.status === 'PENDING').length}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function BookingsList({ bookings }) {
+function BookingsList({ bookings, getRestaurantName }) {
   // Sort bookings by date (newest first) and then by time
   const sortedBookings = [...bookings].sort((a, b) => {
     if (a.date !== b.date) {
@@ -217,6 +266,7 @@ function BookingsList({ bookings }) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Restaurant</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Party Size</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -228,6 +278,9 @@ function BookingsList({ bookings }) {
                 <tr key={booking.bookingId}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatTime(booking.time)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {getRestaurantName(booking.restaurantId)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     Customer #{booking.userId}
@@ -260,24 +313,6 @@ function BookingsList({ bookings }) {
         </div>
       ))}
     </div>
-  );
-}
-
-function StatCard({ title, value, icon }) {
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center">
-          <div className="p-2 rounded-full bg-orange-50 mr-4">
-            {icon}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
