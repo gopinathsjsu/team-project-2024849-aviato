@@ -42,7 +42,7 @@ export default function Search() {
   }, [dispatch, date, time, partySize, location]);
   
   // Initialize map when restaurants are loaded
-  useEffect(() => {
+  useEffect(() => {    
     if (loading || !restaurants.length || !mapContainer.current || mapLoaded) return;
     console.log('before Initializing map', restaurants);
     const initializeMap = async () => {
