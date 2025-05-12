@@ -14,8 +14,11 @@ const Booking = lazy(() => import('./pages/Booking'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ManagerDashboard = lazy(() => import('./pages/Manager/Dashboard'));
+const Restaurants = lazy(() => import('./pages/Manager/Restaurants'));
 const RestaurantEdit = lazy(() => import('./pages/Manager/RestaurantEdit'));
+const RestaurantAdd = lazy(() => import('./pages/Manager/RestaurantAdd'));
 const BookingManagement = lazy(() => import('./pages/Manager/BookingManagement'));
+const ManagerBookings = lazy(() => import('./pages/Manager/Bookings'));
 const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const Approvals = lazy(() => import('./pages/Admin/Approvals'));
 const Analytics = lazy(() => import('./pages/Admin/Analytics'));
@@ -49,8 +52,11 @@ function App() {
             {/* Restaurant Manager Routes */}
             <Route element={<RoleBasedRoute role="RESTAURANT_MANAGER" />}>
               <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+              <Route path="/manager/restaurants" element={<Restaurants />} />
               <Route path="/manager/restaurant/edit/:id" element={<RestaurantEdit />} />
-              <Route path="/manager/bookings" element={<BookingManagement />} />
+              <Route path="/manager/restaurant/add" element={<RestaurantAdd />} />
+              <Route path="/manager/reservations/:id" element={<BookingManagement />} />
+              <Route path="/manager/bookings" element={<ManagerBookings />} />
             </Route>
 
             {/* Admin Routes */}
