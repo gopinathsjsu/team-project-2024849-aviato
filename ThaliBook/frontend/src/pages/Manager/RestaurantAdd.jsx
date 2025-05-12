@@ -23,7 +23,7 @@ export default function RestaurantAdd() {
   const { token } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
   const [existingRestaurants, setExistingRestaurants] = useState([]);
-  const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA'; // Replace with your actual Mapbox token
+  const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
   // Fetch existing restaurants to check for name uniqueness
   useEffect(() => {
     const fetchExistingRestaurants = async () => {
@@ -58,13 +58,13 @@ export default function RestaurantAdd() {
     latitude: '',
     longitude: '',
     hours: {
-      Monday: '9:00 AM - 10:00 PM',
-      Tuesday: '9:00 AM - 10:00 PM',
-      Wednesday: '9:00 AM - 10:00 PM',
-      Thursday: '9:00 AM - 10:00 PM',
-      Friday: '9:00 AM - 11:00 PM',
-      Saturday: '9:00 AM - 11:00 PM',
-      Sunday: '9:00 AM - 10:00 PM'
+      Mon: '09:00-22:00',
+      Tue: '09:00-22:00',
+      Wed: '09:00-22:00',
+      Thu: '09:00-22:00',
+      Fri: '09:00-23:00',
+      Sat: '09:00-23:00',
+      Sun: '09:00-22:00'
     },
     tables: {
       2: 10, // 10 tables for 2 people
@@ -86,6 +86,57 @@ export default function RestaurantAdd() {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Helper function to validate and format hours in 24-hour format (HH:MM-HH:MM)
+  const validateAndFormatHours = (value) => {
+    // Check if the input already matches the required format
+    if (/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(value)) {
+      return value;
+    }
+    
+    // Try to parse and convert the input
+    try {
+      // Split by hyphen or dash
+      const parts = value.split(/[-–—]/);
+      if (parts.length !== 2) {
+        return value; // Return as is if we can't parse
+      }
+      
+      const openTime = parts[0].trim();
+      const closeTime = parts[1].trim();
+      
+      // Function to convert time to 24-hour format
+      const convertTo24Hour = (timeStr) => {
+        // If already in 24-hour format
+        if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+          // Ensure 2 digits for hours
+          const [hours, minutes] = timeStr.split(':');
+          return `${hours.padStart(2, '0')}:${minutes}`;
+        }
+        
+        // Try to parse 12-hour format
+        const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)/);
+        if (!match) return timeStr;
+        
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2] ? match[2] : '00';
+        const period = match[3].toLowerCase();
+        
+        if (period === 'pm' && hours < 12) hours += 12;
+        if (period === 'am' && hours === 12) hours = 0;
+        
+        return `${hours.toString().padStart(2, '0')}:${minutes}`;
+      };
+      
+      const formattedOpen = convertTo24Hour(openTime);
+      const formattedClose = convertTo24Hour(closeTime);
+      
+      return `${formattedOpen}-${formattedClose}`;
+    } catch (error) {
+      console.error('Error formatting hours:', error);
+      return value; // Return as is if there's an error
+    }
   };
 
   const handleHoursChange = (day, value) => {
@@ -144,7 +195,12 @@ export default function RestaurantAdd() {
         // Ensure zipCode is 5 digits
         zipCode: formData.zipCode.replace(/[^\d]/g, '').substring(0, 5),
         // Ensure costRating is one of "$", "$$", or "$$$"
-        costRating: formData.costRating.length > 3 ? formData.costRating.substring(0, 3) : formData.costRating
+        costRating: formData.costRating.length > 3 ? formData.costRating.substring(0, 3) : formData.costRating,
+        // Format hours to ensure they're in the correct format
+        hours: Object.entries(formData.hours).reduce((acc, [day, hours]) => {
+          acc[day] = validateAndFormatHours(hours);
+          return acc;
+        }, {})
       };
 
       // Geocode the address to get latitude and longitude
@@ -224,7 +280,7 @@ export default function RestaurantAdd() {
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select cuisine" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={"bg-white"}>
                       <SelectItem value="Indian">Indian</SelectItem>
                       <SelectItem value="Italian">Italian</SelectItem>
                       <SelectItem value="Chinese">Chinese</SelectItem>
@@ -248,11 +304,10 @@ export default function RestaurantAdd() {
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select price range" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={"bg-white"}>
                       <SelectItem value="$">$ (Inexpensive)</SelectItem>
                       <SelectItem value="$$">$$ (Moderate)</SelectItem>
                       <SelectItem value="$$$">$$$ (Expensive)</SelectItem>
-                      <SelectItem value="$$$$">$$$$ (Very Expensive)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -368,6 +423,7 @@ export default function RestaurantAdd() {
           {/* Hours of Operation */}
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Hours of Operation</h2>
+            <p className="text-sm text-gray-500 mb-4">Enter hours in 24-hour format (e.g., 09:00-22:00)</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.keys(formData.hours).map((day) => (
                 <div key={day}>
@@ -376,7 +432,7 @@ export default function RestaurantAdd() {
                     id={`hours-${day}`}
                     value={formData.hours[day]}
                     onChange={(e) => handleHoursChange(day, e.target.value)}
-                    placeholder="9:00 AM - 10:00 PM"
+                    placeholder="09:00-22:00"
                     className="mt-1"
                   />
                 </div>

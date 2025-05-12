@@ -43,6 +43,7 @@ export default function ManagerDashboard() {
     try {
       // Fetch restaurants
       const restaurantsResponse = await api.get('/restaurants/manager');
+      console.log('Restaurants at manager dashboard:', restaurantsResponse.data);
       setRestaurants(restaurantsResponse.data);
 
       // Fetch bookings
