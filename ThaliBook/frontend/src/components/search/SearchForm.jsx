@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, Users, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function SearchForm() {
   const navigate = useNavigate();
@@ -15,6 +17,8 @@ export default function SearchForm() {
     partySize: '2',
     location: ''
   });
+  
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [locationError, setLocationError] = useState('');
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
@@ -24,6 +28,13 @@ export default function SearchForm() {
       [field]: value
     }));
   };
+  
+  // Update searchParams.date when selectedDate changes
+  useEffect(() => {
+    if (selectedDate) {
+      handleChange('date', format(selectedDate, 'yyyy-MM-dd'));
+    }
+  }, [selectedDate]);
 
   const times = Array.from({length: 28}, (_, i) => {
     const hour = Math.floor((20 + i) / 2);
@@ -159,11 +170,14 @@ export default function SearchForm() {
               <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
                 <Calendar className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
-                type="date"
-                className="pl-10 w-full"
-                value={searchParams.date}
-                onChange={(e) => handleChange('date', e.target.value)}
+              <DatePicker
+                selected={selectedDate}
+                onChange={date => setSelectedDate(date)}
+                dateFormat="MMMM d, yyyy"
+                className="pl-10 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                wrapperClassName="w-full"
+                popperClassName="z-50"
+                minDate={new Date()}
               />
             </div>
           </div>
