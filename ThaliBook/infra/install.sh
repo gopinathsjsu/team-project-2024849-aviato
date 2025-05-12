@@ -39,10 +39,11 @@ EOF
 
 git clone https://github.com/gopinathsjsu/team-project-2024849-aviato.git
 cd team-project-2024849-aviato
+cd ThaliBook
 cd backend
 mvn clean install
 cd target
-nohup java -jar /home/ubuntu/backend/backend-0.0.1-SNAPSHOT.jar > /home/ubuntu/backend/app.log 2>&1 &
+nohup java -jar ./backend-0.0.1-SNAPSHOT.jar > /home/ubuntu/team-project-2024849-aviato/ThaliBook/backend/app.log 2>&1 &
 cd ../../frontend
 npm install
 
