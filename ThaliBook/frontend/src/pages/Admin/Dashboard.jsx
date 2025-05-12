@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -24,6 +25,7 @@ export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState('30');
   const [viewMode, setViewMode] = useState('chart');
   const chartRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -82,12 +84,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const rankedChartData = topRestaurants.map((r, i) => ({
-    name: restaurantNames[r.restaurantId] || `Restaurant ${r.restaurantId}`,
-    bookings: r.bookingCount,
-    fill: ['#16a34a', '#22c55e', '#84cc16', '#facc15', '#f97316'][i] || '#ddd',
-  }));
-
   const handleDownloadChart = () => {
     if (chartRef.current === null) return;
     htmlToImage.toPng(chartRef.current).then((dataUrl) => {
@@ -95,9 +91,23 @@ export default function AdminDashboard() {
     });
   };
 
+  const rankedChartData = topRestaurants.map((r, i) => ({
+    name: restaurantNames[r.restaurantId] || `Restaurant ${r.restaurantId}`,
+    bookings: r.bookingCount,
+    fill: ['#16a34a', '#22c55e', '#84cc16', '#facc15', '#f97316'][i] || '#ddd',
+  }));
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Welcome, Admin {user?.name || ''}</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Welcome, Admin {user?.name || ''}</h1>
+        <Button
+          className="bg-red-600 hover:bg-red-700"
+          onClick={() => navigate('/admin/approvals')}
+        >
+          Remove Restaurants
+        </Button>
+      </div>
 
       {stats ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
@@ -122,7 +132,6 @@ export default function AdminDashboard() {
         </select>
       </div>
 
-      {/* ✅ ENHANCED CHART SECTION */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Top Restaurants by Bookings</h2>
