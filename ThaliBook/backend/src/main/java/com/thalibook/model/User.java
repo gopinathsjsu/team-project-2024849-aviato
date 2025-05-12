@@ -22,6 +22,9 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
 
+    @Column(length = 100)
+    private String name;
+
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 

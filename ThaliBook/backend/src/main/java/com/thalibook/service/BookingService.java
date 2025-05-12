@@ -81,19 +81,21 @@ public class BookingService {
 
                     // Notify restaurant manager
                     User manager = userRepository.findById(restaurant.getManagerId()).orElse(null);
-                    if (manager != null) {
-                        String subject = "New Booking Confirmed at " + restaurant.getName();
-                        String body = "A new table has been booked on " + booking.getDate() + " at " + booking.getTime() +
-                                " for party size " + booking.getPartySize() + ".";
-//                        emailService.sendEmail(manager.getEmail(), subject, body);
+                    User customer = userRepository.findById(userId).orElse(null);
+                    if (manager != null && customer!=null) {
 
                         notificationService.notifyUser(
                                 manager.getUserId(), manager.getEmail(),
-                                "New booking at " + restaurant.getName() + " on " + booking.getDate() + " at " + booking.getTime()
+                                "New booking at " + restaurant.getName() + " on " + booking.getDate() + " at " + booking.getTime() + "by " + customer.getName()
+                        );
+
+                        notificationService.notifyUser(
+                                userId, customer.getEmail(),
+                                "Your booking is confirmed at " + restaurant.getName() + " on " + booking.getDate() + " at " + booking.getTime()
                         );
                     }
 
-                    return savedBooking; // ✅ return successful booking
+                    return savedBooking;
                 }
             }
         }
