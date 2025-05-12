@@ -30,7 +30,9 @@ public class AdminController {
     private final RestaurantRepository restaurantRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
-    private final RestaurantService restaurantService;
+
+    @Autowired
+    private  RestaurantService restaurantService;
 
     @Autowired
     private EmailService emailService;
@@ -44,7 +46,6 @@ public class AdminController {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.adminService = adminService;
-        this.restaurantService = restaurantService;
     }
 
     @GetMapping("/stats")
@@ -81,7 +82,7 @@ public class AdminController {
         return ResponseEntity.ok(topRestaurants);
     }
 
-    @GetMapping("/allRestaurants")
+    @GetMapping("/getAllRestaurants")
     public ResponseEntity<List<Restaurant>> getAllRestaurants() {
       List< Restaurant > allRestaurants = restaurantService.getAllRestaurants();
       return ResponseEntity.ok( allRestaurants );
