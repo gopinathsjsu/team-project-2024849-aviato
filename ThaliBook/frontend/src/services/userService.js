@@ -8,6 +8,12 @@ const userService = {
     return response.data;
   },
 
+  // Get all users
+  getAllUsers: async () => {
+    const response = await api.get("/users");
+    return response.data;
+  },
+
   // Update user profile
   updateProfile: async (userData) => {
     const response = await api.put("/users/profile", userData);

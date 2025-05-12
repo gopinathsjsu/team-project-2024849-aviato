@@ -42,7 +42,7 @@ export default function RestaurantMap({ restaurant }) {
         console.log("Initializing map with coordinates:", coordinates);
         // Re-import mapboxgl to ensure it's available
         const mapboxgl = await import('mapbox-gl');
-        mapboxgl.default.accessToken = 'pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg';
+        mapboxgl.default.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
         
         // Check if map container is still in the DOM
         if (!mapContainer.current) {

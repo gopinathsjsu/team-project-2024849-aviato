@@ -216,7 +216,7 @@ export default function Dashboard() {
                       variant="outline"
                       className="ml-3 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
                       onClick={() => {
-                        window.location.href = `/restaurants/${booking.restaurantId}`;
+                        window.location.href = `/restaurant/${booking.restaurantId}`;
                       }}
                     >
                       View Restaurant

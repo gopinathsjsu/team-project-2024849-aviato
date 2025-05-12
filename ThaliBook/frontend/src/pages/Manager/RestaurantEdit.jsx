@@ -49,13 +49,13 @@ export default function RestaurantEdit() {
     latitude: null,
     longitude: null,
     hours: {
-      Monday: '9:00 AM - 10:00 PM',
-      Tuesday: '9:00 AM - 10:00 PM',
-      Wednesday: '9:00 AM - 10:00 PM',
-      Thursday: '9:00 AM - 10:00 PM',
-      Friday: '9:00 AM - 11:00 PM',
-      Saturday: '9:00 AM - 11:00 PM',
-      Sunday: '9:00 AM - 10:00 PM'
+      Mon: '09:00-22:00',
+      Tue: '09:00-22:00',
+      Wed: '09:00-22:00',
+      Thu: '09:00-22:00',
+      Fri: '09:00-23:00',
+      Sat: '09:00-23:00',
+      Sun: '09:00-22:00'
     },
     tables: {
       2: 10,
@@ -76,14 +76,35 @@ export default function RestaurantEdit() {
       // Initialize hours if not present
       if (!response.data.hours) {
         response.data.hours = {
-          Monday: '9:00 AM - 10:00 PM',
-          Tuesday: '9:00 AM - 10:00 PM',
-          Wednesday: '9:00 AM - 10:00 PM',
-          Thursday: '9:00 AM - 10:00 PM',
-          Friday: '9:00 AM - 11:00 PM',
-          Saturday: '9:00 AM - 11:00 PM',
-          Sunday: '9:00 AM - 10:00 PM'
+          Mon: '09:00-22:00',
+          Tue: '09:00-22:00',
+          Wed: '09:00-22:00',
+          Thu: '09:00-22:00',
+          Fri: '09:00-23:00',
+          Sat: '09:00-23:00',
+          Sun: '09:00-22:00'
         };
+      } else {
+        // Convert hours to the correct format if they're in the old format
+        const formattedHours = {};
+        const dayMap = {
+          'Monday': 'Mon',
+          'Tuesday': 'Tue',
+          'Wednesday': 'Wed',
+          'Thursday': 'Thu',
+          'Friday': 'Fri',
+          'Saturday': 'Sat',
+          'Sunday': 'Sun'
+        };
+        
+        Object.entries(response.data.hours).forEach(([day, hours]) => {
+          // If the day is in the old format, convert it
+          const newDay = dayMap[day] || day;
+          // Format the hours
+          formattedHours[newDay] = validateAndFormatHours(hours);
+        });
+        
+        response.data.hours = formattedHours;
       }
       
       // Initialize tables if not present
@@ -120,6 +141,57 @@ export default function RestaurantEdit() {
     }));
   };
 
+  // Helper function to validate and format hours in 24-hour format (HH:MM-HH:MM)
+  const validateAndFormatHours = (value) => {
+    // Check if the input already matches the required format
+    if (/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(value)) {
+      return value;
+    }
+    
+    // Try to parse and convert the input
+    try {
+      // Split by hyphen or dash
+      const parts = value.split(/[-–—]/);
+      if (parts.length !== 2) {
+        return value; // Return as is if we can't parse
+      }
+      
+      const openTime = parts[0].trim();
+      const closeTime = parts[1].trim();
+      
+      // Function to convert time to 24-hour format
+      const convertTo24Hour = (timeStr) => {
+        // If already in 24-hour format
+        if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+          // Ensure 2 digits for hours
+          const [hours, minutes] = timeStr.split(':');
+          return `${hours.padStart(2, '0')}:${minutes}`;
+        }
+        
+        // Try to parse 12-hour format
+        const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|AM|PM)/);
+        if (!match) return timeStr;
+        
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2] ? match[2] : '00';
+        const period = match[3].toLowerCase();
+        
+        if (period === 'pm' && hours < 12) hours += 12;
+        if (period === 'am' && hours === 12) hours = 0;
+        
+        return `${hours.toString().padStart(2, '0')}:${minutes}`;
+      };
+      
+      const formattedOpen = convertTo24Hour(openTime);
+      const formattedClose = convertTo24Hour(closeTime);
+      
+      return `${formattedOpen}-${formattedClose}`;
+    } catch (error) {
+      console.error('Error formatting hours:', error);
+      return value; // Return as is if there's an error
+    }
+  };
+
   const handleHoursChange = (day, value) => {
     setFormData(prev => ({
       ...prev,
@@ -147,7 +219,14 @@ export default function RestaurantEdit() {
 
     try {
       // Create a copy of the form data for submission
-      const updatedData = { ...formData };
+      const updatedData = {
+        ...formData,
+        // Format hours to ensure they're in the correct format
+        hours: Object.entries(formData.hours).reduce((acc, [day, hours]) => {
+          acc[day] = validateAndFormatHours(hours);
+          return acc;
+        }, {})
+      };
       
       // Geocode the address to get latitude and longitude
       try {
@@ -413,6 +492,7 @@ export default function RestaurantEdit() {
             {/* Hours of Operation */}
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h2 className="text-lg font-semibold mb-4">Hours of Operation</h2>
+              <p className="text-sm text-gray-500 mb-4">Enter hours in 24-hour format (e.g., 09:00-22:00)</p>
               <div className="space-y-3">
                 {Object.keys(formData.hours).map((day) => (
                   <div key={day}>
@@ -421,7 +501,7 @@ export default function RestaurantEdit() {
                       id={`hours-${day}`}
                       value={formData.hours[day]}
                       onChange={(e) => handleHoursChange(day, e.target.value)}
-                      placeholder="9:00 AM - 10:00 PM"
+                      placeholder="09:00-22:00"
                       className="mt-1"
                     />
                   </div>
