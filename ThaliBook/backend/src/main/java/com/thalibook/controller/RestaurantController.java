@@ -97,11 +97,15 @@ public class RestaurantController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
             @RequestParam int partySize,
             @RequestParam(required = false) String city,
-            @RequestParam(required = false) String state,
             @RequestParam(required = false) String zip
     ) {
-        List<Restaurant> results = restaurantService.searchRestaurants(date, time, partySize, city, state, zip);
-        return ResponseEntity.ok(results);
+        try {
+            List<Restaurant> results = restaurantService.searchRestaurants(date, time, partySize, city, zip);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 

@@ -24,6 +24,12 @@ export default function Search() {
   const partySize = searchParams.get('partySize') || '2';
   const location = searchParams.get('location') || '';
   
+  const getSurroundingSlots = (time) => {
+    const times = Array.from({length: 28}, (_, i) => `${String(10 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 === 0 ? '00' : '30'}`);
+    const idx = times.indexOf(time);
+    return times.slice(Math.max(0, idx - 2), idx + 3);
+  };
+  
   // Fetch restaurants on initial load
   useEffect(() => {
     dispatch(searchRestaurants({
@@ -38,7 +44,7 @@ export default function Search() {
   // Initialize map when restaurants are loaded
   useEffect(() => {
     if (loading || !restaurants.length || !mapContainer.current || mapLoaded) return;
-    
+    console.log('before Initializing map', restaurants);
     const initializeMap = async () => {
       try {
         const mapboxgl = await import('mapbox-gl');
@@ -75,9 +81,7 @@ export default function Search() {
         
         // If no restaurants were geocoded successfully, use a default location
         if (restaurantsWithCoordinates.length === 0) {
-          console.warn("No restaurants could be geocoded, using default coordinates");
-          // Default to San Francisco
-          bounds.extend([-122.4194, 37.7749]);
+          console.warn("No restaurants could be geocoded");
         }
         
         // Create the map
@@ -257,7 +261,7 @@ export default function Search() {
                         </div>
                         
                         <div className="flex flex-wrap gap-2">
-                          {['18:00', '18:30', '19:00', '19:30', '20:00'].map(timeSlot => (
+                          {getSurroundingSlots(time).map(timeSlot => (
                             <Link
                               key={timeSlot}
                               to={`/booking/${restaurant.restaurantId}?date=${date}&time=${timeSlot}&partySize=${partySize}`}
