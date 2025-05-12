@@ -34,14 +34,15 @@ export default function RestaurantReview({ restaurantId }) {
 
   const fetchReviews = async () => {
     try {
+      const config = token
+        ? { headers: { Authorization: `Bearer ${token}` } }
+        : {};
+
       const res = await axios.get(
         `http://localhost:8080/api/reviews/restaurant/${restaurantId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        config
       );
+
       setReviews(res.data);
 
       if (user) {
@@ -141,7 +142,6 @@ export default function RestaurantReview({ restaurantId }) {
         <div className="pt-6 border-t border-gray-200">
           <h3 className="text-lg font-semibold mb-2">Add Your Review</h3>
           <div className="space-y-3">
-            {/* ⭐ Star Rating with Hover + Tooltip + Reset */}
             <div>
               <label className="block mb-1 text-sm font-medium">Rating</label>
               <div className="flex items-center gap-1">
@@ -168,7 +168,6 @@ export default function RestaurantReview({ restaurantId }) {
               </div>
             </div>
 
-            {/* 📝 Comment Input */}
             <div>
               <label className="block mb-1 text-sm font-medium">Comment</label>
               <Textarea

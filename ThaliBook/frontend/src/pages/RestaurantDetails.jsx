@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRestaurantDetails } from '@/store/thunks/restaurantThunks';
-import { MapPin, Star, DollarSign, Clock, Calendar, Users, Phone } from 'lucide-react';
+import { MapPin, Star, DollarSign, Clock, Calendar, Users, Phone, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format, parseISO } from 'date-fns';
 import RestaurantMap from '@/components/restaurant/RestaurantMap';
@@ -77,6 +77,7 @@ export default function RestaurantDetails() {
     photoUrl,
     averageRating,
     totalReviews,
+    bookingsToday,
   } = currentRestaurant;
 
   const costDisplay = Array(costRating?.length || 2)
@@ -101,7 +102,7 @@ export default function RestaurantDetails() {
           <h1 className="text-3xl font-bold mb-4">{name}</h1>
 
           <div className="flex flex-wrap items-center gap-4 mb-6">
-            {/* ⭐ Dynamic Average Rating */}
+            {/* ⭐ Average Rating */}
             <div className="flex items-center">
               {Array(5)
                 .fill()
@@ -127,6 +128,14 @@ export default function RestaurantDetails() {
 
             {/* 🍽 Cuisine */}
             <div>{cuisine}</div>
+
+            {/* 🔥 Bookings Today Badge */}
+            {bookingsToday > 0 && (
+              <span className="inline-flex items-center gap-2 text-sm bg-gradient-to-r from-orange-200 to-orange-100 text-orange-800 font-medium px-3 py-1 rounded-full shadow-sm animate-pulse transition hover:shadow-md">
+                <Flame className="w-4 h-4 text-orange-500" />
+                {bookingsToday} booking{bookingsToday > 1 && 's'} today
+              </span>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 mb-8">
@@ -165,7 +174,7 @@ export default function RestaurantDetails() {
             <RestaurantMap restaurant={currentRestaurant} />
           </div>
 
-          {/* ✅ Reviews section */}
+          {/* Reviews */}
           <div className="mb-8">
             <RestaurantReview restaurantId={parseInt(id)} />
           </div>
