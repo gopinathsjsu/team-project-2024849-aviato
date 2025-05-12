@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '@/store/thunks/authThunks';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Bell } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -66,6 +66,18 @@ export default function Header() {
                       </button>
                     </div>
                   </div>
+                </div>
+                <div className="relative">
+                  <Link to="/notifications" className="text-gray-700 hover:text-orange-600">
+                    <div className="relative">
+                      <Bell className="h-5 w-5" />
+                      {/* {notificationCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {notificationCount > 5 ? '5+' : notificationCount}
+                        </span>
+                      )} */}
+                    </div>
+                  </Link>
                 </div>
               </>
             ) : (
