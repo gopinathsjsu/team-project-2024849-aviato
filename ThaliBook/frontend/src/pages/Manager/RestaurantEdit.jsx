@@ -1,4 +1,3 @@
-// src/pages/Manager/RestaurantEdit.jsx
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -23,8 +22,14 @@ export default function RestaurantEdit() {
         const res = await axios.get(`http://localhost:8080/api/restaurants/details/${restaurantId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setRestaurant(res.data);
-        setForm(res.data);
+        const data = res.data;
+        // Ensure 'tables' and 'hours' exist and are structured properly
+        setRestaurant(data);
+        setForm({
+          ...data,
+          tables: data.tables || { 2: '', 4: '', 6: '' },
+          hours: data.hours || { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '', Sat: '', Sun: '' },
+        });
       } catch (err) {
         console.error('Failed to load restaurant:', err);
         toast.error('Failed to load restaurant details');
@@ -47,6 +52,15 @@ export default function RestaurantEdit() {
         hours: {
           ...prev.hours,
           [day]: value,
+        },
+      }));
+    } else if (name.startsWith('tables.')) {
+      const size = name.split('.')[1];
+      setForm(prev => ({
+        ...prev,
+        tables: {
+          ...prev.tables,
+          [size]: parseInt(value) || '',
         },
       }));
     } else {
@@ -77,7 +91,7 @@ export default function RestaurantEdit() {
 
       {updated && (
         <div className="mb-4 px-4 py-2 bg-green-50 border border-green-200 text-green-800 rounded-md shadow-sm">
-           Restaurant details updated successfully!
+          ✅ Restaurant details updated successfully!
         </div>
       )}
 
@@ -139,6 +153,21 @@ export default function RestaurantEdit() {
               <Input
                 id={`hours.${day}`}
                 name={`hours.${day}`}
+                value={value}
+                onChange={handleChange}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {Object.entries(form.tables || {}).map(([size, value]) => (
+            <div key={size}>
+              <Label htmlFor={`tables.${size}`}>Tables of {size}</Label>
+              <Input
+                id={`tables.${size}`}
+                name={`tables.${size}`}
+                type="number"
                 value={value}
                 onChange={handleChange}
               />

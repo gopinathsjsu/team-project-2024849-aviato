@@ -9,15 +9,14 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export default function ManagerDashboard() {
-  const { user } = useSelector((state) => state.auth);
+  const { user, token } = useSelector((state) => state.auth);
   const [restaurants, setRestaurants] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
     name: '', address: '', city: '', state: '', zipCode: '', phone: '',
     cuisine: '', costRating: '', description: '', photoUrl: '',
-    hours: {
-      Mon: '', Tue: '', Wed: '', Thu: '', Fri: '', Sat: '', Sun: ''
-    }
+    hours: { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '', Sat: '', Sun: '' },
+    tables: { 2: '', 4: '', 6: '' }
   });
 
   useEffect(() => {
@@ -26,7 +25,9 @@ export default function ManagerDashboard() {
 
   const fetchRestaurants = async () => {
     try {
-      const response = await api.get('/restaurants/manager');
+      const response = await api.get('/restaurants/manager', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRestaurants(response.data);
     } catch (err) {
       console.error("Failed to fetch manager's restaurants:", err);
@@ -41,6 +42,12 @@ export default function ManagerDashboard() {
         ...prev,
         hours: { ...prev.hours, [day]: value }
       }));
+    } else if (name.startsWith('tables.')) {
+      const size = name.split('.')[1];
+      setForm(prev => ({
+        ...prev,
+        tables: { ...prev.tables, [size]: parseInt(value) || '' }
+      }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -49,13 +56,18 @@ export default function ManagerDashboard() {
   const handleAddRestaurant = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/restaurants', form);
+      await api.post('/restaurants', form, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       toast.success('Restaurant added! Pending admin approval.');
       setShowModal(false);
       setForm({
         name: '', address: '', city: '', state: '', zipCode: '', phone: '',
         cuisine: '', costRating: '', description: '', photoUrl: '',
-        hours: { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '', Sat: '', Sun: '' }
+        hours: { Mon: '', Tue: '', Wed: '', Thu: '', Fri: '', Sat: '', Sun: '' },
+        tables: { 2: '', 4: '', 6: '' }
       });
       fetchRestaurants();
     } catch (err) {
@@ -132,11 +144,28 @@ export default function ManagerDashboard() {
                 <div className="col-span-2"><Label htmlFor="photoUrl">Photo URL</Label><Input id="photoUrl" name="photoUrl" value={form.photoUrl} onChange={handleChange} /></div>
                 <div className="col-span-2"><Label htmlFor="description">Description</Label><Textarea id="description" name="description" value={form.description} onChange={handleChange} /></div>
               </div>
+
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {Object.entries(form.hours).map(([day, val]) => (
                   <div key={day}><Label>{day}</Label><Input name={`hours.${day}`} value={val} onChange={handleChange} /></div>
                 ))}
               </div>
+
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                {Object.entries(form.tables).map(([size, qty]) => (
+                  <div key={size}>
+                    <Label htmlFor={`tables.${size}`}>Tables of {size}</Label>
+                    <Input
+                      id={`tables.${size}`}
+                      name={`tables.${size}`}
+                      type="number"
+                      value={qty}
+                      onChange={handleChange}
+                    />
+                  </div>
+                ))}
+              </div>
+
               <div className="flex justify-end gap-4 mt-4">
                 <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
                   Cancel
