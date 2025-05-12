@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
-import { useSelector } from 'react-redux';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+// src/pages/Admin/Dashboard.jsx
+import { useEffect, useState, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -12,20 +13,23 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Cell
-} from 'recharts';
-import * as htmlToImage from 'html-to-image';
-import download from 'downloadjs';
+} from "recharts";
+import * as htmlToImage from "html-to-image";
+import download from "downloadjs";
+import { logoutUser } from "@/store/thunks/authThunks";
 
 export default function AdminDashboard() {
-  const { user, token } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user, token } = useSelector((state) => state.auth);
+
   const [stats, setStats] = useState(null);
   const [topRestaurants, setTopRestaurants] = useState([]);
   const [restaurantNames, setRestaurantNames] = useState({});
   const [pendingRestaurants, setPendingRestaurants] = useState([]);
-  const [dateRange, setDateRange] = useState('30');
-  const [viewMode, setViewMode] = useState('chart');
+  const [dateRange, setDateRange] = useState("30");
+  const [viewMode, setViewMode] = useState("chart");
   const chartRef = useRef(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -33,15 +37,16 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const statsRes = await axios.get('http://localhost:8080/api/admin/stats', {
+      const statsRes = await axios.get("http://localhost:8080/api/admin/stats", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const topRes = await axios.get(`http://localhost:8080/api/admin/analytics/top-restaurants?days=${dateRange}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const topRes = await axios.get(
+        `http://localhost:8080/api/admin/analytics/top-restaurants?days=${dateRange}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      const pendingRes = await axios.get('http://localhost:8080/api/restaurants/pending', {
+      const pendingRes = await axios.get("http://localhost:8080/api/restaurants/pending", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -51,14 +56,15 @@ export default function AdminDashboard() {
 
       const nameMap = {};
       for (const r of topRes.data) {
-        const res = await axios.get(`http://localhost:8080/api/restaurants/details/${r.restaurantId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          `http://localhost:8080/api/restaurants/details/${r.restaurantId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         nameMap[r.restaurantId] = res.data.name;
       }
       setRestaurantNames(nameMap);
     } catch (err) {
-      console.error('Failed to fetch admin dashboard data:', err);
+      console.error("Failed to fetch admin dashboard data:", err);
     }
   };
 
@@ -69,7 +75,7 @@ export default function AdminDashboard() {
       });
       fetchDashboardData();
     } catch (err) {
-      console.error('Failed to approve restaurant:', err);
+      console.error("Failed to approve restaurant:", err);
     }
   };
 
@@ -80,33 +86,46 @@ export default function AdminDashboard() {
       });
       fetchDashboardData();
     } catch (err) {
-      console.error('Failed to remove restaurant:', err);
+      console.error("Failed to remove restaurant:", err);
     }
   };
 
   const handleDownloadChart = () => {
     if (chartRef.current === null) return;
     htmlToImage.toPng(chartRef.current).then((dataUrl) => {
-      download(dataUrl, 'top_restaurants_chart.png');
+      download(dataUrl, "top_restaurants_chart.png");
     });
+  };
+
+  const handleSignOut = () => {
+    dispatch(logoutUser());
+    navigate("/login");
   };
 
   const rankedChartData = topRestaurants.map((r, i) => ({
     name: restaurantNames[r.restaurantId] || `Restaurant ${r.restaurantId}`,
     bookings: r.bookingCount,
-    fill: ['#16a34a', '#22c55e', '#84cc16', '#facc15', '#f97316'][i] || '#ddd',
+    fill: ["#16a34a", "#22c55e", "#84cc16", "#facc15", "#f97316"][i] || "#ddd",
   }));
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Welcome, Admin {user?.name || ''}</h1>
-        <Button
-          className="bg-red-600 hover:bg-red-700"
-          onClick={() => navigate('/admin/approvals')}
-        >
-          Remove Restaurants
-        </Button>
+        <h1 className="text-2xl font-bold">Welcome, Admin {user?.name || ""}</h1>
+        <div className="flex gap-4">
+          <Button
+            className="bg-red-600 hover:bg-red-700"
+            onClick={() => navigate("/admin/approvals")}
+          >
+            Remove Restaurants
+          </Button>
+          <Button
+            className="bg-red-600 hover:bg-red-700"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </Button>
+        </div>
       </div>
 
       {stats ? (
@@ -136,17 +155,17 @@ export default function AdminDashboard() {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Top Restaurants by Bookings</h2>
           <div className="flex gap-3">
-            <Button onClick={() => setViewMode(viewMode === 'chart' ? 'table' : 'chart')}>
+            <Button onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}>
               Toggle View
             </Button>
-            {viewMode === 'chart' && (
+            {viewMode === "chart" && (
               <Button onClick={handleDownloadChart}>Download Chart</Button>
             )}
           </div>
         </div>
 
         {topRestaurants.length > 0 ? (
-          viewMode === 'chart' ? (
+          viewMode === "chart" ? (
             <div ref={chartRef} className="w-full h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -213,7 +232,7 @@ export default function AdminDashboard() {
 
 function StatCard({ title, value, highlight = false }) {
   return (
-    <div className={`p-4 rounded shadow border ${highlight ? 'bg-yellow-100 border-yellow-300' : 'bg-white'}`}>
+    <div className={`p-4 rounded shadow border ${highlight ? "bg-yellow-100 border-yellow-300" : "bg-white"}`}>
       <h3 className="text-sm text-gray-600">{title}</h3>
       <p className="text-2xl font-bold text-gray-800">{value}</p>
     </div>

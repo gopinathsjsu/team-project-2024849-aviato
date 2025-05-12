@@ -27,11 +27,11 @@ const Register = lazy(() => import('./pages/Register'));
 
 function App() {
   const location = useLocation();
-  const hideHeader = location.pathname.startsWith('/manager');
+  const hideLayout = location.pathname.startsWith('/manager') || location.pathname.startsWith('/admin');
 
   return (
     <div className="flex flex-col min-h-svh">
-      {!hideHeader && <Header />}
+      {!hideLayout && <Header />}
       <main className="flex-1">
         <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
           <Routes>
@@ -68,7 +68,7 @@ function App() {
           </Routes>
         </Suspense>
       </main>
-      <Footer />
+      {!hideLayout && <Footer />}
     </div>
   );
 }

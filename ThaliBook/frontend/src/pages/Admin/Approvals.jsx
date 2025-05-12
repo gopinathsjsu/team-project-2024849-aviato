@@ -3,10 +3,13 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export default function Approvals() {
   const { token } = useSelector(state => state.auth);
   const [restaurants, setRestaurants] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchRestaurants();
@@ -41,7 +44,12 @@ export default function Approvals() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">All Restaurants</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">All Restaurants</h1>
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/admin/dashboard')}>
+          Back to Dashboard
+        </Button>
+      </div>
 
       {restaurants.length === 0 ? (
         <p className="text-gray-600">No restaurants found.</p>
@@ -58,12 +66,12 @@ export default function Approvals() {
                   {rest.address}, {rest.city}
                 </p>
               </div>
-              <button
+              <Button
                 onClick={() => handleRemove(rest.restaurantId, rest.name)}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition duration-150"
+                className="bg-red-600 hover:bg-red-700"
               >
                 Remove Restaurant Listing
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
