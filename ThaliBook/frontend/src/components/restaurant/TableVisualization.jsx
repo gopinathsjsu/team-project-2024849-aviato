@@ -4,7 +4,7 @@ import { Calendar, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import bookingService from '@/services/bookingService';
-import api from '@/services/api';
+import React from 'react';
 
 export default function TableVisualization({ restaurantId, tables }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -12,6 +12,7 @@ export default function TableVisualization({ restaurantId, tables }) {
   const [tableAvailability, setTableAvailability] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [availableTables, setAvailableTables] = useState([]);
 
   // Available time slots
   const timeSlots = [
@@ -26,6 +27,49 @@ export default function TableVisualization({ restaurantId, tables }) {
     return date;
   });
 
+  // Create tables from props
+  useEffect(() => {
+    const createTablesFromProps = () => {
+      if (!tables || Object.keys(tables).length === 0) {
+        setAvailableTables([]);
+        return;
+      }
+
+      // Create a map to track used tableIds to ensure uniqueness
+      const usedTableIds = new Set();
+      const allTables = [];
+      
+      // Generate unique table IDs for each size and count
+      let tableCounter = 1;
+      Object.entries(tables).forEach(([size, count]) => {
+        for (let i = 0; i < count; i++) {
+          // Ensure tableId is unique
+          while (usedTableIds.has(tableCounter)) {
+            tableCounter++;
+          }
+          
+          usedTableIds.add(tableCounter);
+          allTables.push({
+            tableId: tableCounter,
+            size: parseInt(size),
+            restaurantId: restaurantId
+          });
+          
+          tableCounter++;
+        }
+      });
+      
+      console.log('Created tables from props:', allTables);
+      console.log('Table IDs created:', allTables.map(t => t.tableId));
+      setAvailableTables(allTables);
+    };
+
+    if (restaurantId) {
+      createTablesFromProps();
+    }
+  }, [restaurantId, tables]);
+
+  // Fetch booking availability
   useEffect(() => {
     if (restaurantId) {
       fetchTableAvailability();
@@ -40,15 +84,21 @@ export default function TableVisualization({ restaurantId, tables }) {
       // Format date as YYYY-MM-DD for API
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       
-      // First, get all tables for this restaurant
-      await api.get(`/restaurants/details/${restaurantId}`);
-      // We don't need to use the response since we already have the tables data passed as props
-      
-      // Then get all bookings for this restaurant and date
+      // Get all bookings for this restaurant and date using the onDate endpoint
       const bookingsForDate = await bookingService.getRestaurantBookings(
         restaurantId,
         formattedDate
       );
+      
+      console.log('Bookings for date from onDate endpoint:', bookingsForDate);
+      
+      // Log the raw booking data for debugging
+      console.log('Raw booking data types:', bookingsForDate.map(booking => ({
+        tableId: booking.tableId,
+        tableIdType: typeof booking.tableId,
+        time: booking.time,
+        status: booking.status
+      })));
       
       // Filter out cancelled bookings
       const activeBookings = bookingsForDate.filter(
@@ -63,11 +113,16 @@ export default function TableVisualization({ restaurantId, tables }) {
         const bookingHour = parseInt(bookingTime.split(':')[0]);
         const selectedHour = parseInt(selectedTime.split(':')[0]);
         
+        console.log(`Comparing booking time ${bookingTime} (hour: ${bookingHour}) with selected time ${selectedTime} (hour: ${selectedHour})`);
+        
         if (Math.abs(bookingHour - selectedHour) <= 1) {
+          console.log(`Table ${booking.tableId} (type: ${typeof booking.tableId}) is booked at ${bookingTime}`);
           bookedTables[booking.tableId] = booking;
         }
       });
       
+      console.log('Booked tables for visualization:', bookedTables);
+      console.log('Booked table IDs:', Object.keys(bookedTables));
       setTableAvailability(bookedTables);
     } catch (err) {
       console.error('Error fetching table availability:', err);
@@ -77,29 +132,15 @@ export default function TableVisualization({ restaurantId, tables }) {
     }
   };
 
-  // Generate a visual representation of tables based on the restaurant's table configuration
+  // Generate a visual representation of tables
   const renderTables = () => {
-    if (!tables || Object.keys(tables).length === 0) {
+    if (availableTables.length === 0) {
       return (
         <div className="text-center py-8">
           <p className="text-gray-600">No table information available</p>
         </div>
       );
     }
-
-    // Create an array of all tables with their sizes
-    const allTables = [];
-    Object.entries(tables).forEach(([size, count]) => {
-      for (let i = 0; i < count; i++) {
-        // Create a unique table ID
-        const tableId = i + 1;
-        allTables.push({
-          id: tableId,
-          size: parseInt(size),
-          label: `Table ${tableId}`,
-        });
-      }
-    });
 
     return (
       <div className="p-4">
@@ -118,25 +159,23 @@ export default function TableVisualization({ restaurantId, tables }) {
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 place-items-center">
-          {allTables.map((table) => {
-            const isBooked = Object.values(tableAvailability).some(b => b.tableId === table.id);
+          {availableTables.map((table) => {
+            // Check if this table is booked
+            const isBooked = tableAvailability[table.tableId] !== undefined;
+            console.log(`Table ${table.tableId} booked status:`, isBooked, 'Available tables:', Object.keys(tableAvailability));
             
             return (
               <div
-                key={table.id}
+                key={`table-${table.tableId}`}
                 className="p-2 text-center flex flex-col items-center"
               >
-                <div className="mb-1 text-center">
-                  <span className="font-bold">Table {table.id}</span>
-                </div>
-                
                 {/* Table visualization */}
                 <div className="relative mx-auto" style={{ width: '80px', height: '80px' }}>
-                  {/* Table - now round */}
-                  <div className={`absolute inset-0 m-auto rounded-full border-2 mt-0.5 ${
+                  {/* Table - round */}
+                  <div className={`absolute inset-0 m-auto rounded-full border-2 ${
                     isBooked
-                      ? 'border-red-400'
-                      : 'border-green-400'
+                      ? 'border-red-400 bg-red-50'
+                      : 'border-green-400 bg-green-50'
                     }`}
                        style={{
                          width: table.size <= 2 ? '40px' : table.size <= 4 ? '50px' : '60px',
@@ -147,12 +186,14 @@ export default function TableVisualization({ restaurantId, tables }) {
                        }}>
                     {/* Table ID */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-bold">{table.id}</span>
+                      <span className="text-xs font-bold">{table.tableId}</span>
                     </div>
                   </div>
                   
                   {/* Chairs */}
                   {Array.from({ length: Math.min(table.size, 8) }).map((_, i) => {
+                    // Use a unique key that includes the table ID and chair index
+                    const chairKey = `table-${table.tableId}-chair-${i}`;
                     // Calculate position for each chair around the table
                     const angle = (i * (360 / Math.min(table.size, 8))) * (Math.PI / 180);
                     const radius = table.size <= 2 ? 30 : table.size <= 4 ? 35 : 40;
@@ -161,7 +202,7 @@ export default function TableVisualization({ restaurantId, tables }) {
                     
                     return (
                       <div
-                        key={i}
+                        key={chairKey}
                         className={`absolute rounded-full border ${
                           isBooked
                             ? 'bg-red-300 border-red-500'
@@ -180,7 +221,8 @@ export default function TableVisualization({ restaurantId, tables }) {
                 </div>
                 
                 <div className="text-xs mt-1 text-center">
-                  {table.size} seats
+                  <div className="font-bold">Table {table.tableId}</div>
+                  <div>{table.size} seats</div>
                   {isBooked && <div className="text-red-600 font-semibold">Booked</div>}
                 </div>
               </div>
@@ -210,7 +252,7 @@ export default function TableVisualization({ restaurantId, tables }) {
               <div className="grid grid-cols-7 gap-1">
                 {dates.map((date, index) => (
                   <Button
-                    key={index}
+                    key={`date-${index}`}
                     variant={date.toDateString() === selectedDate.toDateString() ? "default" : "outline"}
                     className="p-2 h-auto flex flex-col"
                     onClick={() => setSelectedDate(date)}
@@ -231,7 +273,7 @@ export default function TableVisualization({ restaurantId, tables }) {
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-1">
               {timeSlots.map((time) => (
                 <Button
-                  key={time}
+                  key={`time-${time}`}
                   variant={time === selectedTime ? "default" : "outline"}
                   className="p-2"
                   onClick={() => setSelectedTime(time)}

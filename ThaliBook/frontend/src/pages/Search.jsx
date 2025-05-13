@@ -53,6 +53,8 @@ export default function Search() {
   
   // Initialize map when restaurants are loaded
   useEffect(() => {
+    console.log("Restaurants loaded:", restaurants);
+    
     console.log('before Initializing map', restaurants);
     if (loading || !restaurants.length || !mapContainer.current || mapLoaded) return;
     const initializeMap = async () => {
