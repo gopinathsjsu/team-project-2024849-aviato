@@ -9,7 +9,7 @@ resource "aws_launch_template" "thalibook" {
 resource "aws_autoscaling_group" "thalibook" {
   availability_zones = ["us-west-1b"]
   desired_capacity   = 2
-  max_size           = 3
+  max_size           = 2
   min_size           = 2
  
   load_balancers = [aws_elb.thalibook.name]
