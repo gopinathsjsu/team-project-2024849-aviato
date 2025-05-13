@@ -27,14 +27,14 @@ export default function TableVisualization({ restaurantId, tables }) {
     return date;
   });
 
-  // Create tables from props
+  // Create tables from props and fetch restaurant tables
   useEffect(() => {
-    const createTablesFromProps = () => {
-      if (!tables || Object.keys(tables).length === 0) {
-        setAvailableTables([]);
-        return;
-      }
+    if (!restaurantId) {
+      return;
+    }
 
+    // Create tables from the tables object in props
+    if (tables && Object.keys(tables).length > 0) {
       // Create a map to track used tableIds to ensure uniqueness
       const usedTableIds = new Set();
       const allTables = [];
@@ -59,13 +59,11 @@ export default function TableVisualization({ restaurantId, tables }) {
         }
       });
       
-      console.log('Created tables from props:', allTables);
-      console.log('Table IDs created:', allTables.map(t => t.tableId));
+      console.log('TableVisualization - Input data:', { restaurantId, tables });
+      console.log('TableVisualization - Generated tables:', allTables);
       setAvailableTables(allTables);
-    };
-
-    if (restaurantId) {
-      createTablesFromProps();
+    } else {
+      setAvailableTables([]);
     }
   }, [restaurantId, tables]);
 
@@ -90,15 +88,7 @@ export default function TableVisualization({ restaurantId, tables }) {
         formattedDate
       );
       
-      console.log('Bookings for date from onDate endpoint:', bookingsForDate);
-      
-      // Log the raw booking data for debugging
-      console.log('Raw booking data types:', bookingsForDate.map(booking => ({
-        tableId: booking.tableId,
-        tableIdType: typeof booking.tableId,
-        time: booking.time,
-        status: booking.status
-      })));
+      console.log('TableVisualization - Fetched bookings:', bookingsForDate);
       
       // Filter out cancelled bookings
       const activeBookings = bookingsForDate.filter(
@@ -107,22 +97,25 @@ export default function TableVisualization({ restaurantId, tables }) {
       
       // Create a map of booked tables
       const bookedTables = {};
+      
+      // Mark all tables with active bookings as booked
       activeBookings.forEach(booking => {
+        // Convert tableId to number if it's a string to ensure consistent comparison
+        const tableId = typeof booking.tableId === 'string'
+          ? parseInt(booking.tableId, 10)
+          : booking.tableId;
+        
         // Check if the booking time is close to the selected time (within 1 hour)
         const bookingTime = booking.time.substring(0, 5); // Extract HH:MM
         const bookingHour = parseInt(bookingTime.split(':')[0]);
         const selectedHour = parseInt(selectedTime.split(':')[0]);
         
-        console.log(`Comparing booking time ${bookingTime} (hour: ${bookingHour}) with selected time ${selectedTime} (hour: ${selectedHour})`);
-        
         if (Math.abs(bookingHour - selectedHour) <= 1) {
-          console.log(`Table ${booking.tableId} (type: ${typeof booking.tableId}) is booked at ${bookingTime}`);
-          bookedTables[booking.tableId] = booking;
+          bookedTables[tableId] = booking;
         }
       });
-      
-      console.log('Booked tables for visualization:', bookedTables);
-      console.log('Booked table IDs:', Object.keys(bookedTables));
+
+      console.log('TableVisualization - Booked tables:', bookedTables);
       setTableAvailability(bookedTables);
     } catch (err) {
       console.error('Error fetching table availability:', err);
@@ -161,8 +154,12 @@ export default function TableVisualization({ restaurantId, tables }) {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 place-items-center">
           {availableTables.map((table) => {
             // Check if this table is booked
-            const isBooked = tableAvailability[table.tableId] !== undefined;
-            console.log(`Table ${table.tableId} booked status:`, isBooked, 'Available tables:', Object.keys(tableAvailability));
+            // Ensure consistent type comparison by converting to number if needed
+            const tableId = typeof table.tableId === 'string'
+              ? parseInt(table.tableId, 10)
+              : table.tableId;
+            
+            const isBooked = tableAvailability[tableId] !== undefined;
             
             return (
               <div
@@ -172,7 +169,7 @@ export default function TableVisualization({ restaurantId, tables }) {
                 {/* Table visualization */}
                 <div className="relative mx-auto" style={{ width: '80px', height: '80px' }}>
                   {/* Table - round */}
-                  <div className={`absolute inset-0 m-auto rounded-full border-2 ${
+                  <div className={`absolute inset-0 m-auto rounded-full border-2 mt-0.5 ${
                     isBooked
                       ? 'border-red-400 bg-red-50'
                       : 'border-green-400 bg-green-50'
