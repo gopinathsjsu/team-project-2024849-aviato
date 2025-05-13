@@ -60,7 +60,7 @@ export default function Search() {
     const initializeMap = async () => {
       try {
         const mapboxgl = await import('mapbox-gl');
-        mapboxgl.default.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+        mapboxgl.default.accessToken = "pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg"
         
         // Create restaurant data with coordinates
 

@@ -23,7 +23,7 @@ export default function RestaurantAdd() {
   const { token } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
   const [existingRestaurants, setExistingRestaurants] = useState([]);
-  const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+  const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg";
   // Fetch existing restaurants to check for name uniqueness
   useEffect(() => {
     const fetchExistingRestaurants = async () => {

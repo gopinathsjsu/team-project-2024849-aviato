@@ -52,7 +52,7 @@ export default function SearchForm() {
             
             // Get Mapbox token from environment variables
             // In a real app, you would store this in .env file
-            const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.your_mapbox_token_here';
+            const MAPBOX_ACCESS_TOKEN = "pk.eyJ1IjoicHJ1dGh2aWswOSIsImEiOiJjbTl5bTQ1NzQwM3YyMndvZzF4OXc1a3RxIn0.F9sTscmR-4pV3g-AnFv5Yg"
             
             if (MAPBOX_ACCESS_TOKEN === 'pk.your_mapbox_token_here') {
               console.warn('Please set your Mapbox access token in environment variables (VITE_MAPBOX_TOKEN)');
