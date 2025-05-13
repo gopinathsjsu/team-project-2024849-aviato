@@ -227,13 +227,11 @@ This project is for educational purposes only. Add a license if needed.
 
 **Team Name**: Thali Devs  
 **Team Members**:
-- Member 1 – Backend / Auth
-- Member 2 – Frontend / UI
-- Member 3 – Restaurant Manager Module
-- Member 4 – Admin Panel & Analytics
+- Rushabh Runwal - Backend API design, Auth Service, JWT
+- Rishi Patel – React Frontend setup, Admin flow, Search restaurant flow
+- Pruthvik Sheth – UI wireframes, Restaurant Manager flow, Notification flow
+- Yashishvin Pothuri – AWS Deployment, Postgres Database Structure, Booking table flow
 
-**📒 Project Journal**: [GitHub Wiki Link]  
-**📊 Scrum Board & Backlog**: [Google Sheet / Trello Board Link]
 
 ---
 
