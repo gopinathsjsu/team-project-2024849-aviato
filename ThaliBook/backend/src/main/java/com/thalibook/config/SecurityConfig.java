@@ -48,7 +48,9 @@ public class SecurityConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of(
+                              "http://localhost:5173",
+                              "http://thalibook-elb-1301707889.us-west-1.elb.amazonaws.com" ));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("*"));
 
