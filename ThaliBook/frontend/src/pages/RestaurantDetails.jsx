@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRestaurantDetails } from '@/store/thunks/restaurantThunks';
@@ -8,6 +8,7 @@ import { format, parseISO } from 'date-fns';
 import RestaurantMap from '@/components/restaurant/RestaurantMap';
 import RestaurantReview from '@/pages/RestaurantReview';
 import { useAuth } from '@/hooks/useAuth';
+import restaurantService from '@/services/restaurantService';
 
 export default function RestaurantDetails() {
   const { id } = useParams();
@@ -19,12 +20,37 @@ export default function RestaurantDetails() {
   const date = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
   const time = searchParams.get('time') || '19:00';
   const partySize = searchParams.get('partySize') || '2';
+  
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const { currentRestaurant, loading, error } = useSelector(state => state.restaurant);
 
   useEffect(() => {
     dispatch(fetchRestaurantDetails(id));
   }, [dispatch, id]);
+  
+  // Fetch available time slots when component mounts or when date/party size changes
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      try {
+        setLoadingSlots(true);
+        const slots = await restaurantService.getAvailableTimeSlots(id, date, partySize);
+        // If no slots are returned, use default slots
+        setTimeSlots(slots.length > 0 ? slots : ['17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00']);
+      } catch (error) {
+        console.error('Error fetching time slots:', error);
+        // Fallback to default slots on error
+        setTimeSlots(['17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00']);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+    
+    if (id) {
+      fetchTimeSlots();
+    }
+  }, [id, date, partySize]);
 
   const handleBooking = () => {
     if (!isAuthenticated) {
@@ -33,8 +59,6 @@ export default function RestaurantDetails() {
       navigate(`/booking/${id}?date=${date}&time=${time}&partySize=${partySize}`);
     }
   };
-
-  const timeSlots = ['17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00'];
 
   if (loading) {
     return (
@@ -201,23 +225,29 @@ export default function RestaurantDetails() {
 
             <div className="mb-6">
               <h3 className="font-semibold mb-3">Select a time:</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {timeSlots.map((slot) => (
-                  <Button
-                    key={slot}
-                    variant={slot === time ? 'default' : 'outline'}
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      const newParams = new URLSearchParams(searchParams);
-                      newParams.set('time', slot);
-                      navigate(`/restaurant/${id}?${newParams.toString()}`);
-                    }}
-                  >
-                    {slot}
-                  </Button>
-                ))}
-              </div>
+              {loadingSlots ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {timeSlots.map((slot) => (
+                    <Button
+                      key={slot}
+                      variant={slot === time ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.set('time', slot);
+                        navigate(`/restaurant/${id}?${newParams.toString()}`);
+                      }}
+                    >
+                      {slot}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Button className="w-full" size="lg" onClick={handleBooking}>
