@@ -59,3 +59,5 @@ sudo cp -r dist/* /var/www/html/
 # Reload NGINX and restart NGINX
 sudo nginx -t && sudo systemctl reload nginx
 sudo systemctl restart nginx
+#find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" \) -exec sed -i 's|http://localhost:8080|http://thalibook-elb-1301707889.us-west-1.elb.amazonaws.com|g' {} \;
+#grep -r "localhost:8080" .
