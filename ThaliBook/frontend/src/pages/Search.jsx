@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { meta } from '@eslint/js';
 
 export default function Search() {
   const [searchParams] = useSearchParams();
@@ -54,12 +53,14 @@ export default function Search() {
   
   // Initialize map when restaurants are loaded
   useEffect(() => {
+    console.log("Restaurants loaded:", restaurants);
+    
     console.log('before Initializing map', restaurants);
     if (loading || !restaurants.length || !mapContainer.current || mapLoaded) return;
     const initializeMap = async () => {
       try {
         const mapboxgl = await import('mapbox-gl');
-        mapboxgl.default.accessToken = meta.env.VITE_MAPBOX_TOKEN;
+        mapboxgl.default.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
         
         // Create restaurant data with coordinates
 

@@ -16,6 +16,14 @@ const bookingService = {
     const response = await api.delete(`/bookings/${bookingId}`);
     return response.data;
   },
+
+  getRestaurantBookings: async (restaurantId, date) => {
+    // Use the new endpoint to get bookings for a specific date
+    const response = await api.get(
+      `/bookings/onDate?restaurantId=${restaurantId}&date=${date}`
+    );
+    return response.data;
+  },
 };
 
 export default bookingService;

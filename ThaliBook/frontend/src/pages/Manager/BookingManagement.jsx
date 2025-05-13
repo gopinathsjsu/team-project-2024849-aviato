@@ -5,6 +5,7 @@ import authService from '@/services/authService';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import ManagerSidebar from '@/components/layout/ManagerSidebar';
+import TableVisualization from '@/components/restaurant/TableVisualization';
 import {
   Users,
   Clock,
@@ -312,6 +313,12 @@ export default function BookingManagement() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Table Visualization Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4">Table Visualization</h2>
+          <TableVisualization restaurantId={restaurantId} tables={restaurant.tables} />
         </div>
 
         {/* Bookings Section */}
