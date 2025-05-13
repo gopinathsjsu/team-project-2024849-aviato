@@ -91,6 +91,7 @@ thali-book/
 ├── docs/
 │   ├── wireframes/
 │   └── diagrams/
+|   └──scrumreport/
 │
 ├── .gitignore
 ├── README.md
